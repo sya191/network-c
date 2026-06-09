@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
+#include <net/if_arp.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -16,7 +17,8 @@
 static netdev_t netdev = {
     .tap_fd = -1,
     .dev = {0},
-    .mac = {0},
+    // locally assigned MAC address (note first byte is 0x2)
+    .mac = {0x2, 0x0, 0x0, 0x0, 0x0, 0x1},
     .ip = 0,
     .start = false
 };
@@ -58,6 +60,26 @@ int netdev_create()
 
     netdev.tap_fd = fd;
 
+    // assign MAC address to TAP device in kernel
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        perror("socket()");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, netdev.dev, IFNAMSIZ);
+    ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
+    memcpy(ifr.ifr_hwaddr.sa_data, netdev.mac, 6);
+
+    if (ioctl(sock, SIOCSIFHWADDR, &ifr) < 0) {
+        perror("SIOCSIFHWADDR");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    close(sock);
+
     return fd;
 }
 
@@ -87,6 +109,8 @@ int netdev_start()
     }
 
     close(sock);
+
+    // TODO: Get mac address and store it in netdev
 
     return 0;
 }
