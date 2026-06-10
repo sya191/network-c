@@ -50,6 +50,13 @@ static void disable_ipv6()
     close(fd);
 }
 
+static void enable_ip_fwd()
+{
+    int fd = open("/proc/sys/net/ipv4/ip_forward", O_WRONLY);
+    write(fd, "1", 1);
+    close(fd);
+}
+
 int netdev_create()
 {
     if (netdev.tap_fd != -1) {
@@ -143,6 +150,8 @@ int netdev_create()
         disable_ipv6();
     }
 
+    enable_ip_fwd();
+
     return fd;
 }
 
@@ -172,6 +181,10 @@ int netdev_start()
     }
 
     close(sock);
+
+    // Uncomment below to enable NAT on kernel for addresses 10.0.0.0/24
+    // Need this for sending (acts like an actual router)
+    // system("iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o enp0s3 -j MASQUERADE");
 
     return 0;
 }
