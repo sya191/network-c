@@ -1,5 +1,6 @@
 #define ETHBUFSIZ 1500
 #include "tap.h"
+#include "ethernet.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -23,5 +24,6 @@ int main()
             return -1;
         }
         printf("%ld bytes read from TAP\n", bytes);
+        handle_eth((void *)buf);
     }
 }

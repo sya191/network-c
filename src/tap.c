@@ -1,3 +1,4 @@
+#define TAPADDR "10.0.0.1" // THIS IS THE TAP DEVICE IP ADDRESS (STACK DOESN'T USE THIS)
 #include "tap.h"
 #include <stdlib.h>
 #include <fcntl.h>
@@ -5,6 +6,7 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 #include <net/if_arp.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -78,7 +80,43 @@ int netdev_create()
         exit(EXIT_FAILURE);
     }
 
+    // assign IP address (stack could actually not even use this ip address)
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, netdev.dev, IFNAMSIZ);
+    struct sockaddr_in *addr = (struct sockaddr_in *)&ifr.ifr_addr;
+    addr->sin_family = AF_INET;
+    inet_pton(AF_INET, TAPADDR, &addr->sin_addr);
+
+    if (ioctl(sock, SIOCSIFADDR, &ifr) < 0) {
+        perror("SIOCSIFADDR");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    // Assign network mask, implicitly defines the subnet.
+    // Think of subnets as a strongly connected component on a graph.
+    // If the TAP device has no range of IPs defined as the subnet,
+    // The kernel won't even ARP it. Thus, we need to set the mask.
+    // 10.0.0.1/24 means 3 bytes are set in stone (the first 3 because 24/8),
+    // last one can be anything, so we have 255 possible devices on this subnet.
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, netdev.dev, IFNAMSIZ);
+    addr = (struct sockaddr_in *)&ifr.ifr_netmask;
+    addr->sin_family = AF_INET;
+    // 3 byte mask
+    inet_pton(AF_INET, "255.255.255.0", &addr->sin_addr);
+
+    if (ioctl(sock, SIOCSIFNETMASK, &ifr) < 0) {
+        perror("SIOCSIFNETMASK");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
     close(sock);
+
+    // Assign the real ip address for this stack
+    inet_pton(AF_INET, "10.0.0.123", &netdev.ip);
 
     return fd;
 }
@@ -109,8 +147,6 @@ int netdev_start()
     }
 
     close(sock);
-
-    // TODO: Get mac address and store it in netdev
 
     return 0;
 }
