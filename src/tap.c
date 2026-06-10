@@ -1,4 +1,6 @@
+#define DISABLEIPV6 true
 #define TAPADDR "10.0.0.1" // THIS IS THE TAP DEVICE IP ADDRESS (STACK DOESN'T USE THIS)
+#define IPADDR "10.0.0.123" // THE ACTUAL IP ADDRESS THIS STACK USES
 #include "tap.h"
 #include <stdlib.h>
 #include <fcntl.h>
@@ -28,6 +30,24 @@ static netdev_t netdev = {
 void netdev_name(char *dest)
 {
     strncpy(dest, netdev.dev, IFNAMSIZ);
+}
+
+static void disable_ipv6()
+{
+    char path[256] = "/proc/sys/net/ipv6/conf/";
+    // append device name
+    strncat(path, netdev.dev, 10);
+    strncat(path, "/disable_ipv6", 15);
+    int fd = open(path, O_TRUNC | O_WRONLY);
+    if (fd == -1) {
+        perror("open()");
+        exit(EXIT_FAILURE);
+    }
+    if (write(fd, "1", 1) < 1) {
+        perror("write()");
+        exit(EXIT_FAILURE);
+    }
+    close(fd);
 }
 
 int netdev_create()
@@ -116,7 +136,12 @@ int netdev_create()
     close(sock);
 
     // Assign the real ip address for this stack
-    inet_pton(AF_INET, "10.0.0.123", &netdev.ip);
+    inet_pton(AF_INET, IPADDR, &netdev.ip);
+
+    // disable IPv6
+    if (DISABLEIPV6) {
+        disable_ipv6();
+    }
 
     return fd;
 }
