@@ -175,3 +175,13 @@ int netdev_start()
 
     return 0;
 }
+
+uint32_t netdev_ip()
+{
+    return ntohl(netdev.ip);
+}
+
+void netdev_mac(uint8_t *dest)
+{
+    memcpy(dest, netdev.mac, sizeof(netdev.mac));
+}

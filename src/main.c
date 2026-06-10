@@ -24,6 +24,6 @@ int main()
             return -1;
         }
         printf("%ld bytes read from TAP\n", bytes);
-        handle_eth((void *)buf);
+        handle_eth((void *)buf, fd);
     }
 }

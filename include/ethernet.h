@@ -15,6 +15,9 @@ typedef struct {
 #pragma pack(pop)
 
 /**
- * Big ass switch case to handle each ethertype
+ * Big switch case to handle each ethertype
+ * 
+ * @param addr the ethernet frame address (usually in a buffer).
+ * @param fd the network device to write to.
  */
-int handle_eth(void *addr);
+int handle_eth(void *addr, int fd);
