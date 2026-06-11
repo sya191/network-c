@@ -17,4 +17,6 @@ int handle_eth(void *addr, int fd)
         default:
             break;
     }
+
+    return 0;
 }

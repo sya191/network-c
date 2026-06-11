@@ -12,13 +12,20 @@
 #include <linux/if_ether.h>
 
 static arp_cache_t arp_cache = {
-    .data = {0},
+    .data = {{0}},
     .size = 0
 };
 
 int lookup_ip(uint8_t mac_dest[6], uint32_t ip)
 {
+    for (unsigned int i = 0; i < arp_cache.size; ++i) {
+        if (arp_cache.data[i].ip == ip) {
+            memcpy(mac_dest, arp_cache.data[i].mac, 6);
+            return 0;
+        }
+    }
 
+    return -1;
 }
 
 // Update an ip entry with new MAC
@@ -26,7 +33,7 @@ static void update_ip(uint32_t ip, uint8_t src[6])
 {
     // check if ip is in table
     int idx = -1;
-    for (int i = 0; i < arp_cache.size; ++i) {
+    for (unsigned int i = 0; i < arp_cache.size; ++i) {
         if (arp_cache.data[i].ip == ip) {
             idx = i;
             break;
