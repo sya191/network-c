@@ -58,3 +58,11 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * - We don't have the MAC address in our table -> drop the packet and send ARP request to update table
  */
 int recv_arp(void *payload, int fd);
+
+/**
+ * Broadcasts an ARP message via the broadcast MAC address (FF:FF:FF:FF:FF:FF)
+ * 
+ * @param target - the IP address we wish to know the MAC for
+ * @param fd - file descriptor to a network device
+ */
+int broadcast_arp(uint32_t target, int fd);
