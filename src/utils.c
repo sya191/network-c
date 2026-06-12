@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <string.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 
 void swap(void *src, void *dest, size_t size)
 {
@@ -14,4 +15,14 @@ void swap(void *src, void *dest, size_t size)
     memcpy(src, tmp, size);
     free(tmp);
     tmp = NULL;
+}
+
+uint32_t convert_ip(char *src)
+{
+    uint32_t dest;
+    if (inet_pton(AF_INET, src, &dest) < 1) {
+        perror("inet_pton()");
+        exit(EXIT_FAILURE);
+    }
+    return ntohl(dest);
 }

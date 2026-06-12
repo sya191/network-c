@@ -62,7 +62,7 @@ int recv_arp(void *payload, int fd);
 /**
  * Broadcasts an ARP message via the broadcast MAC address (FF:FF:FF:FF:FF:FF)
  * 
- * @param target - the IP address we wish to know the MAC for
+ * @param target - the IP address we wish to know the MAC (in host byte order) 
  * @param fd - file descriptor to a network device
  */
-int broadcast_arp(uint32_t target, int fd);
+void broadcast_arp(uint32_t target, int fd);

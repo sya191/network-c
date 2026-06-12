@@ -35,7 +35,14 @@ int create_interface()
         perror("socket()");
         exit(EXIT_FAILURE);
     }
-    
+    struct packet_mreq mr = {0};
+    mr.mr_ifindex = if_nametoindex("enp0s3");
+    mr.mr_type = PACKET_MR_PROMISC;
+    if (setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1) {
+        perror("setsockopt()");
+        exit(EXIT_FAILURE);
+    }
+
     return fd;
 }
 

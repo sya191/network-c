@@ -1,5 +1,4 @@
 #include "arp.h"
-// #include "tap.h"
 #include "utils.h"
 #include "ethernet.h"
 #include "interface.h"
@@ -78,6 +77,9 @@ int recv_arp(void *eth_frame, int fd)
                 interface_mac(ar->tha);
                 // if the sender wasn't in our table
                 if (merge_flag == false) {
+                    uint8_t *mac = ar->sha;
+                    printf("Cached new arp: ");
+                    printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
                     update_ip(sender_ip, ar->sha);
                 }
                 if (ntohs(ar->op) == ARPOP_REQUEST) {
@@ -106,7 +108,30 @@ int recv_arp(void *eth_frame, int fd)
     return -1;
 }
 
-int broadcast_arp(uint32_t target, int fd)
+void broadcast_arp(uint32_t target, int fd)
 {
+    // Build ethernet header with broadcast address
+    int size = sizeof(eth_hdr_t) + sizeof(ar_t);
+    uint8_t eth_frame[size];
+    memset(eth_frame, 0, size);
+    eth_hdr_t *eth_hdr = (eth_hdr_t *)eth_frame;
+    eth_hdr->ethertype = htons(ETH_P_ARP);
+    interface_mac(eth_hdr->mac_src);
+    uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    memcpy(eth_hdr->mac_dest, broadcast_addr, 6);
+    // Build ARP payload
+    ar_t *ar = (ar_t *)((eth_hdr_t *)eth_frame + 1);
+    ar->hrd = htons(ARPHRD_ETHER);
+    ar->pro = htons(ETH_P_IP);
+    ar->hln = ETH_ALEN;
+    ar->pln = sizeof(struct in_addr);
+    ar->op = htons(ARPOP_REQUEST);
+    interface_mac(ar->sha);
+    ar->spa = htonl(interface_ip());
+    ar->tpa = htonl(target);
 
+    if (write_interface(fd, (void *)eth_frame, size) < 0) {
+        perror("write_interface()");
+        exit(EXIT_FAILURE);
+    }
 }
