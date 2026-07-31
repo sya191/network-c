@@ -1,14 +1,22 @@
 cmake_minimum_required(VERSION 3.10)
-project(network-c C)
+project(network-c C CXX)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-file(GLOB_RECURSE SOURCES "src/*.c")
+file(GLOB_RECURSE LIB_SOURCES "src/*.c")
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/main\\.c$")
 
-add_executable(main ${SOURCES})
+add_library(network-c-lib STATIC ${LIB_SOURCES})
+target_include_directories(network-c-lib PUBLIC include)
+target_compile_options(network-c-lib PRIVATE -Wall -Wextra)
 
-target_include_directories(main PRIVATE include)
+add_executable(main src/main.c)
+target_link_libraries(main PRIVATE network-c-lib)
 
-target_compile_options(main PRIVATE -Wall -Wextra)
+option(BUILD_TESTS "Build unit tests" ON)
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
