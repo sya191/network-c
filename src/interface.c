@@ -46,7 +46,7 @@ int create_interface()
     return fd;
 }
 
-ssize_t write_interface(int fd, char *buf, size_t len)
+ssize_t write_interface(int fd, const void *buf, size_t len)
 {
     struct sockaddr_ll sock_struct = {
         .sll_family = AF_PACKET,

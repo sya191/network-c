@@ -50,7 +50,7 @@ static void update_ip(uint32_t ip, uint8_t src[6])
     }
 }
 
-int recv_arp(void *eth_frame, int fd)
+int recv_arp(void *eth_frame, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len))
 {   
     ar_t *ar = (ar_t *)((eth_hdr_t *)eth_frame + 1);
     // take care to convert byte order for multibyte values

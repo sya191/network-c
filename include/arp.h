@@ -1,5 +1,6 @@
 #define ARPCACHEMAX 256
 #include <stdint.h>
+#include <sys/types.h>
 
 /**
  * Defines the arp body structure
@@ -56,8 +57,12 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * Two things can happen:
  * - We have the MAC address in our table -> translate the protoc addr to hw and send
  * - We don't have the MAC address in our table -> drop the packet and send ARP request to update table
+ * 
+ * @param payload the entire ethernet frame in a buffer
+ * @param fd the file descriptor to write back to
+ * @param write_interface a function pointer that defines how to write to the interface
  */
-int recv_arp(void *payload, int fd);
+int recv_arp(void *payload, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
 
 /**
  * Broadcasts an ARP message via the broadcast MAC address (FF:FF:FF:FF:FF:FF)

@@ -1,4 +1,5 @@
 #include "ethernet.h"
+#include "interface.h"
 #include "arp.h"
 #include <linux/if_ether.h>
 #include <stdio.h>
@@ -13,7 +14,7 @@ int handle_eth(void *addr, int fd)
     eth_hdr_t *hdr = (eth_hdr_t *)addr;
     switch (ntohs(hdr->ethertype)) {
         case ETH_P_ARP:
-            return recv_arp(hdr, fd);
+            return recv_arp(hdr, fd, write_interface);
         default:
             break;
     }

@@ -20,7 +20,7 @@ int create_interface();
 /**
  * Writes to the interface
  */
-ssize_t write_interface(int fd, char *buf, size_t len);
+ssize_t write_interface(int fd, const void *buf, size_t len);
 
 
 /**
