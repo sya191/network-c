@@ -35,6 +35,8 @@ typedef struct {
 
 /**
  * Data structure to store ip to mac translations
+ * 
+ * IP addresses are in HOST byte order
  */
 typedef struct {
     unsigned int size;
