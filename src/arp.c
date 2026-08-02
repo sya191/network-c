@@ -19,7 +19,7 @@ static arp_cache_t arp_cache = {
 int lookup_ip(uint8_t mac_dest[6], uint32_t ip)
 {
     for (unsigned int i = 0; i < arp_cache.size; ++i) {
-        if (arp_cache.data[i].ip == ip) {
+        if (arp_cache.data[i].ip == htonl(ip)) {
             memcpy(mac_dest, arp_cache.data[i].mac, 6);
             return 0;
         }
@@ -134,4 +134,10 @@ void broadcast_arp(uint32_t target, int fd)
         perror("write_interface()");
         exit(EXIT_FAILURE);
     }
+}
+
+void clear_cache()
+{
+    arp_cache.size = 0;
+    memset(arp_cache.data, 0, sizeof(arp_cache.data));
 }

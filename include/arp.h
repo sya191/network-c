@@ -71,3 +71,5 @@ int recv_arp(void *payload, int fd, ssize_t (*write_interface)(int fd, const voi
  * @param fd - file descriptor to a network device
  */
 void broadcast_arp(uint32_t target, int fd);
+
+void clear_cache();
