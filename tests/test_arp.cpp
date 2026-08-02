@@ -59,6 +59,7 @@ TEST_F(ARPTest, recvArpForUsTest) {
     uint8_t mac_value[6];
     uint32_t src_prot_network;
     inet_pton(AF_INET, src_protocol, &src_prot_network);
+    src_prot_network = ntohl(src_prot_network);
     ASSERT_EQ(lookup_ip(mac_value, src_prot_network), 0);
 
     // check if ARP cache has correct IP -> MAC translation
