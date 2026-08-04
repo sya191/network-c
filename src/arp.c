@@ -82,6 +82,7 @@ int recv_arp(void *eth_frame, int fd, ssize_t (*write_interface)(int fd, const v
                     printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
                     update_ip(sender_ip, ar->sha);
                 }
+                // TODO: refactor below this line to a send_arp() function
                 if (ntohs(ar->op) == ARPOP_REQUEST) {
                     // swap hardware
                     swap(&ar->sha, &ar->tha, sizeof(ar->sha));

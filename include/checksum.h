@@ -4,7 +4,7 @@
 /**
  * @brief Computes the internet checksum
  * @param addr start address of bytes
- * @param size size of the header/hdr + payload
+ * @param size in bytes 
  * 
  * @returns a 2-byte checksum
  */

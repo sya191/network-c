@@ -64,9 +64,12 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * @param fd the file descriptor to write back to
  * @param write_interface a function pointer that defines how to write to the interface
  * 
- * @returns 0 if an ARP REPLY is sent, -1 otherwise.
+ * @returns 0 if an ARP REPLY needs to be sent, -1 otherwise.
  */
 int recv_arp(void *payload, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
+
+
+int send_arp(ar_t *msg, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
 
 /**
  * Broadcasts an ARP message via the broadcast MAC address (FF:FF:FF:FF:FF:FF)
