@@ -1,11 +1,15 @@
 # Network-C (A userspace TCP/IP stack)
 The goal of this project is to complete a vertical slice of TCP functionality. That is, to be able to connect to a remote server (that uses UNIX sockets) and send/recv data.
 
+## Resources Used
+- TCP/IP Illustrated Volume 1: The Protocols, 2nd Edition (Kevin R. Fall, W. Richard Stevens)
+- RFC 826
+
 ## Modules 
 - [ ] TCP
 - [ ] IPv4
 - [ ] ICMP
-- [ ] ARP (arp.h)
+- [x] ARP (arp.h)
 - [x] Ethernet (ethernet.h)
 
 ### Design
