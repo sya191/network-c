@@ -20,7 +20,7 @@ Each module should aim to be decoupled from other modules to the best of their a
 *Diagram from Chapter 1 of TCP/IP Illustrated Volume 1: The Protocols, 2nd Edition (Kevin R. Fall, W. Richard Stevens)*
 
 
-All in all, this results in each module having one function to **recieve** payloads from the module above it, and one to **send** payloads from the one below it.
+All in all, this results in each module having one function to **send** payloads from the module above it, and one to **receive** payloads from the one below it.
 
 **Example recv:** ethernet -> demux on type field (hand to IP module) -> hand to TCP module -> ... etc. (stripping each header along the way)
 
