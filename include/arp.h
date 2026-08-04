@@ -63,6 +63,8 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * @param payload the entire ethernet frame in a buffer
  * @param fd the file descriptor to write back to
  * @param write_interface a function pointer that defines how to write to the interface
+ * 
+ * @returns 0 if an ARP REPLY is sent, -1 otherwise.
  */
 int recv_arp(void *payload, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
 

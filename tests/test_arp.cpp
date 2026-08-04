@@ -30,6 +30,9 @@ protected:
     char src_protocol[10] = "192.1.1.1";
 };
 
+/**
+ * Test whether or not an ARP for our interface IP correctly caches
+ */
 TEST_F(ARPTest, recvArpForUsTest) {
     int size = sizeof(eth_hdr_t) + sizeof(ar_t);
     char buf[size];
@@ -68,6 +71,9 @@ TEST_F(ARPTest, recvArpForUsTest) {
     }
 }
 
+/**
+ * Test whether or not an ARP NOT for our IP caches (should not)
+ */
 TEST_F(ARPTest, recvArpNotForUsTest) {
     int size = sizeof(eth_hdr_t) + sizeof(ar_t);
     char buf[size];
