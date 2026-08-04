@@ -25,3 +25,8 @@ All in all, this results in each module having one function to **recieve** paylo
 **Example recv:** ethernet -> demux on type field (hand to IP module) -> hand to TCP module -> ... etc. (stripping each header along the way)
 
 **Example send:** TCP -> IP -> Ethernet
+
+## Hardware dependencies & Support for different NICs
+Because this stack is meant to be hardware agnostic (up to the network card level), all functions that write to/recv from a NIC accept a generic function pointer that may be defined by the user. For the purposes of manual testing, interface.h and interface.c defines the set of functions used to test on a VM running Ubuntu Linux via an ethernet card.
+
+A SOCK_RAW/AF_PACKET Unix socket interface is defined in interface.c/h.
