@@ -2,6 +2,7 @@
 #include "ethernet.h"
 #include "arp.h"
 #include "interface.h"
+#include "iface.h"
 #include "utils.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,17 +15,18 @@
 int main()
 {
     int fd = create_interface();
+    iface_t interface = {
+        .fd = fd,
+        .write_interface = write_interface
+    };
+    // set up buffer
     char buf[ETHBUFSIZ];
-    // try 5 times
-    for (int i = 0; i < 5; ++i) {
-        broadcast_arp(convert_ip("192.168.1.82"), fd);
-    }
     while (1) {
         ssize_t bytes = recv_interface(fd, buf, sizeof(buf));
         if (bytes < 0) {
             perror("recv_interface()");
             return -1;
         }
-        handle_eth((void *)buf, fd);
+        handle_eth((void *)buf, interface);
     }
 }

@@ -1,4 +1,5 @@
 #define ARPCACHEMAX 256
+#include "iface.h"
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -61,22 +62,19 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * - We don't have the MAC address in our table -> drop the packet and send ARP request to update table
  * 
  * @param payload the entire ethernet frame in a buffer
- * @param fd the file descriptor to write back to
- * @param write_interface a function pointer that defines how to write to the interface
+ * @param interace @see iface.h
  * 
  * @returns 0 if an ARP REPLY needs to be sent, -1 otherwise.
  */
-int recv_arp(void *payload, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
+int recv_arp(ar_t *arp_msg, iface_t interface);
 
-
-int send_arp(ar_t *msg, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len));
 
 /**
  * Broadcasts an ARP message via the broadcast MAC address (FF:FF:FF:FF:FF:FF)
  * 
  * @param target - the IP address we wish to know the MAC (in host byte order) 
- * @param fd - file descriptor to a network device
+ * @param interface - @see iface.h
  */
-void broadcast_arp(uint32_t target, int fd);
+void broadcast_arp(uint32_t target, iface_t interface);
 
 void clear_cache();

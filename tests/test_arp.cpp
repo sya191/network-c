@@ -6,6 +6,7 @@ extern "C" {
 #include "ethernet.h"
 #include "arp.h"
 #include "interface.h"
+#include "iface.h"
 }
 
 class ARPTest: public ::testing::Test {
@@ -16,15 +17,16 @@ protected:
             perror("open()");
             exit(EXIT_FAILURE);
         }
-        test_fd = fd;
+        interface.fd = fd;
+        interface.write_interface = write;
     }
 
     void TearDown() override {
-        close(test_fd);
+        close(interface.fd);
         clear_cache();
     }
 
-    int test_fd;
+    iface_t interface;
     uint8_t src_mac[6] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6};
     uint8_t broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     char src_protocol[10] = "192.1.1.1";
@@ -56,7 +58,7 @@ TEST_F(ARPTest, recvArpForUsTest) {
     arp->tpa = htonl(interface_ip()); // target is us
 
     // Should return 0 as the ARP is for our interface IP
-    ASSERT_EQ(recv_arp(buf, test_fd, write), 0);
+    ASSERT_EQ(recv_arp(arp, interface), 0);
 
     // check if ARP cache has cached IP addr
     uint8_t mac_value[6];
@@ -97,7 +99,7 @@ TEST_F(ARPTest, recvArpNotForUsTest) {
     arp->tpa = htonl(0); // target is NOT us
 
     // Should return -1 as the ARP is not for our IP addr
-    ASSERT_EQ(recv_arp(buf, test_fd, write), -1);
+    ASSERT_EQ(recv_arp(arp, interface), -1);
 
     // check if ARP cache has cached IP addr (should not because we've never talked)
     uint8_t mac_value[6];

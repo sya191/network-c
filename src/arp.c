@@ -50,55 +50,54 @@ static void update_ip(uint32_t ip, uint8_t src[6])
     }
 }
 
-int recv_arp(void *eth_frame, int fd, ssize_t (*write_interface)(int fd, const void *buf, size_t len))
+// TODO: recv_arp should call the ethernet module to send frames
+int recv_arp(ar_t *arp_msg, iface_t interface) 
 {   
-    ar_t *ar = (ar_t *)((eth_hdr_t *)eth_frame + 1);
     // take care to convert byte order for multibyte values
-    uint16_t hardware_id = ntohs(ar->hrd);
+    uint16_t hardware_id = ntohs(arp_msg->hrd);
     if (hardware_id == ARPHRD_ETHER) {
-        uint16_t protocol = ntohs(ar->pro);
+        uint16_t protocol = ntohs(arp_msg->pro);
         if (protocol == ETH_P_IP) {
             bool merge_flag = false;
             uint8_t mac_dest[6];
-            uint32_t target_ip = ntohl(ar->tpa);
-            uint32_t sender_ip = ntohl(ar->spa);
+            uint32_t target_ip = ntohl(arp_msg->tpa);
+            uint32_t sender_ip = ntohl(arp_msg->spa);
             // if the sender exists in our table
             // Why the merge flag? Because we should only update our cache if we've talked to them before.
             // If we've never talked to them, then just drop the packet silently.
             if (lookup_ip(mac_dest, sender_ip) == 0) {
                 // update the MAC address of the sender in the table
-                update_ip(sender_ip, ar->sha);
+                update_ip(sender_ip, arp_msg->sha);
                 merge_flag = true;
             }
             // if we are the target ip address
             if (target_ip == interface_ip()) {
                 printf("THIS IS AN ARP FOR US\n");
                 // fill the hardware target address with our MAC
-                interface_mac(ar->tha);
+                interface_mac(arp_msg->tha);
                 // if the sender wasn't in our table
                 if (merge_flag == false) {
-                    uint8_t *mac = ar->sha;
+                    uint8_t *mac = arp_msg->sha;
                     printf("Cached new arp: ");
                     printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-                    update_ip(sender_ip, ar->sha);
+                    update_ip(sender_ip, arp_msg->sha);
                 }
                 // TODO: refactor below this line to a send_arp() function
-                if (ntohs(ar->op) == ARPOP_REQUEST) {
+                if (ntohs(arp_msg->op) == ARPOP_REQUEST) {
                     // swap hardware
-                    swap(&ar->sha, &ar->tha, sizeof(ar->sha));
+                    swap(&arp_msg->sha, &arp_msg->tha, sizeof(arp_msg->sha));
                     // swap protocol
-                    swap(&ar->spa, &ar->tpa, sizeof(ar->tpa));
-                    ar->op = htons(ARPOP_REPLY);
+                    swap(&arp_msg->spa, &arp_msg->tpa, sizeof(arp_msg->tpa));
+                    arp_msg->op = htons(ARPOP_REPLY);
 
                     // send
-                    eth_hdr_t *eth = eth_frame;
-                    memcpy(&eth->mac_src, ar->sha, ar->hln);
-                    memcpy(&eth->mac_dest, ar->tha, ar->hln);
-                    size_t total_size = sizeof(eth_hdr_t) + sizeof(ar_t);
-                    if (write_interface(fd, eth_frame, total_size) < 0) {
-                        perror("write_interface()");
-                        exit(EXIT_FAILURE);
-                    }
+                    send_eth_to_mac(
+                        arp_msg, 
+                        ETH_P_ARP, 
+                        arp_msg->tha, 
+                        sizeof(ar_t), 
+                        interface
+                    );
 
                     return 0;
                 }
@@ -109,19 +108,11 @@ int recv_arp(void *eth_frame, int fd, ssize_t (*write_interface)(int fd, const v
     return -1;
 }
 
-void broadcast_arp(uint32_t target, int fd)
+void broadcast_arp(uint32_t target, iface_t interface)
 {
-    // Build ethernet header with broadcast address
-    int size = sizeof(eth_hdr_t) + sizeof(ar_t);
-    uint8_t eth_frame[size];
-    memset(eth_frame, 0, size);
-    eth_hdr_t *eth_hdr = (eth_hdr_t *)eth_frame;
-    eth_hdr->ethertype = htons(ETH_P_ARP);
-    interface_mac(eth_hdr->mac_src);
-    uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    memcpy(eth_hdr->mac_dest, broadcast_addr, 6);
     // Build ARP payload
-    ar_t *ar = (ar_t *)((eth_hdr_t *)eth_frame + 1);
+    ar_t arp_msg;
+    ar_t *ar = &arp_msg;
     ar->hrd = htons(ARPHRD_ETHER);
     ar->pro = htons(ETH_P_IP);
     ar->hln = ETH_ALEN;
@@ -131,10 +122,14 @@ void broadcast_arp(uint32_t target, int fd)
     ar->spa = htonl(interface_ip());
     ar->tpa = htonl(target);
 
-    if (write_interface(fd, (void *)eth_frame, size) < 0) {
-        perror("write_interface()");
-        exit(EXIT_FAILURE);
-    }
+    uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    send_eth_to_mac(
+        ar,
+        ETH_P_ARP,
+        broadcast_addr,
+        sizeof(ar_t),
+        interface
+    );
 }
 
 void clear_cache()
