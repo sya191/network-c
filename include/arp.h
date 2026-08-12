@@ -60,9 +60,10 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * Two things can happen:
  * - We have the MAC address in our table -> translate the protoc addr to hw and send
  * - We don't have the MAC address in our table -> drop the packet and send ARP request to update table
- * 
- * @param payload the entire ethernet frame in a buffer
+ * @param arp_msg pointer to an arp message
  * @param interace @see iface.h
+ * 
+ * @note typically caller would pass an opaque void * ptr
  * 
  * @returns 0 if an ARP REPLY needs to be sent, -1 otherwise.
  */

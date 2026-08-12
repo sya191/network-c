@@ -1,7 +1,6 @@
 #include "arp.h"
 #include "utils.h"
 #include "ethernet.h"
-#include "interface.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -71,10 +70,10 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
                 merge_flag = true;
             }
             // if we are the target ip address
-            if (target_ip == interface_ip()) {
+            if (target_ip == interface.src_ip) {
                 printf("THIS IS AN ARP FOR US\n");
                 // fill the hardware target address with our MAC
-                interface_mac(arp_msg->tha);
+                memcpy(arp_msg->tha, interface.src_mac, 6);
                 // if the sender wasn't in our table
                 if (merge_flag == false) {
                     uint8_t *mac = arp_msg->sha;
@@ -118,8 +117,8 @@ void broadcast_arp(uint32_t target, iface_t interface)
     ar->hln = ETH_ALEN;
     ar->pln = sizeof(struct in_addr);
     ar->op = htons(ARPOP_REQUEST);
-    interface_mac(ar->sha);
-    ar->spa = htonl(interface_ip());
+    memcpy(ar->sha, interface.src_mac, 6);
+    ar->spa = htonl(interface.src_ip);
     ar->tpa = htonl(target);
 
     uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

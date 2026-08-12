@@ -17,8 +17,12 @@ protected:
             perror("open()");
             exit(EXIT_FAILURE);
         }
-        interface.fd = fd;
-        interface.write_interface = write;
+        interface = {
+            .write_interface = write,
+            .fd = fd,
+            .src_ip = interface_ip(),
+            .src_mac = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6},
+        };
     }
 
     void TearDown() override {
@@ -29,23 +33,15 @@ protected:
     iface_t interface;
     uint8_t src_mac[6] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6};
     uint8_t broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    char src_protocol[10] = "192.1.1.1";
+    char src_protocol[10] = "192.1.1.1"; // sender not our interface
 };
 
 /**
  * Test whether or not an ARP for our interface IP correctly caches
  */
 TEST_F(ARPTest, recvArpForUsTest) {
-    int size = sizeof(eth_hdr_t) + sizeof(ar_t);
-    char buf[size];
-
-    eth_hdr_t *eth_hdr = (eth_hdr_t *)buf;
-    ar_t *arp = (ar_t *)(eth_hdr + 1);
-
-    // format ethernet header
-    memcpy(eth_hdr->mac_src, src_mac, 6);
-    memcpy(eth_hdr->mac_dest, broadcast_mac, 6);
-    eth_hdr->ethertype = htons(ETH_P_ARP);
+    ar_t ar;
+    ar_t *arp = &ar; 
 
     // format arp message
     arp->hrd = htons(1);
@@ -77,16 +73,8 @@ TEST_F(ARPTest, recvArpForUsTest) {
  * Test whether or not an ARP NOT for our IP caches (should not)
  */
 TEST_F(ARPTest, recvArpNotForUsTest) {
-    int size = sizeof(eth_hdr_t) + sizeof(ar_t);
-    char buf[size];
-
-    eth_hdr_t *eth_hdr = (eth_hdr_t *)buf;
-    ar_t *arp = (ar_t *)(eth_hdr + 1);
-
-    // format ethernet header
-    memcpy(eth_hdr->mac_src, src_mac, 6);
-    memcpy(eth_hdr->mac_dest, broadcast_mac, 6);
-    eth_hdr->ethertype = htons(ETH_P_ARP);
+    ar_t ar;
+    ar_t *arp = &ar;
 
     // format arp message
     arp->hrd = htons(1);
