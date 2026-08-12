@@ -38,10 +38,9 @@ protected:
 };
 
 /**
- * Test whether or not an ARP for our interface IP correctly caches
- * and responds
+ * Test whether an ARP for our interface IP correctly caches
  */
-TEST_F(ARPTest, recvArpForUsTest) {
+TEST_F(ARPTest, recvArpCacheTest) {
     ar_t ar;
     ar_t *arp = &ar; 
 
@@ -70,6 +69,27 @@ TEST_F(ARPTest, recvArpForUsTest) {
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(mac_value[i], 6 - i);
     }
+}
+
+/**
+ * Test whether an ARP for our interface IP correctly responds
+ */
+TEST_F(ARPTest, recvArpResponseTest) {
+    ar_t ar;
+    ar_t *arp = &ar; 
+
+    // format arp message
+    arp->hrd = htons(1);
+    arp->pro = htons(ETH_P_IP);
+    arp->hln = 6; // hardware proto. length
+    arp->pln = 4; // protocol length (IPv4 = 4)
+    arp->op = htons(ARPOP_REQUEST); // ARP REQUEST
+    memcpy(arp->sha, src_mac, 6);
+    inet_pton(AF_INET, src_protocol, &arp->spa);
+    arp->tpa = htonl(interface_ip()); // target is us
+
+    // Should return 0 as the ARP is for our interface IP
+    EXPECT_EQ(recv_arp(arp, interface), 0);
 
     char buf[1500];
     lseek(interface.fd, 0, SEEK_SET);
