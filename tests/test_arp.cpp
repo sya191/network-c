@@ -32,7 +32,7 @@ protected:
     }
 
     iface_t interface;
-    uint8_t src_mac[6] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6};
+    uint8_t src_mac[6] = {0x6, 0x5, 0x4, 0x3, 0x2, 0x1};
     uint8_t broadcast_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     char src_protocol[10] = "192.1.1.1"; // sender not our interface
 };
@@ -66,8 +66,9 @@ TEST_F(ARPTest, recvArpForUsTest) {
     ASSERT_EQ(lookup_ip(mac_value, src_prot_network), 0);
 
     // check if ARP cache has correct IP -> MAC translation
+    // Should be {0x6, 0x5, 0x4, 0x3, 0x2, 0x1}
     for (int i = 0; i < 6; ++i) {
-        EXPECT_EQ(mac_value[i], i + 1);
+        EXPECT_EQ(mac_value[i], 6 - i);
     }
 
     char buf[1500];
@@ -78,11 +79,25 @@ TEST_F(ARPTest, recvArpForUsTest) {
     }
     // check if written REPLY is correct
     arp = (ar_t *)(buf + sizeof(eth_hdr_t));
-    EXPECT_EQ(arp->op, htons(ARPOP_REPLY));
-    EXPECT_EQ(arp->spa, htonl(interface.src_ip));
+    EXPECT_EQ(arp->hrd, htons(ARPHRD_ETHER)); // hardware address space
+    EXPECT_EQ(arp->pro, htons(ETH_P_IP)); // protocol address space
+    EXPECT_EQ(arp->hln, 6); // byte length of hardware address
+    EXPECT_EQ(arp->pln, 4); // byte length of protocol address
+    EXPECT_EQ(arp->op, htons(ARPOP_REPLY)); // Opcode
+    // Source MAC should be {0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(arp->sha[i], i + 1);
     }
+    // Source Protocol IPv4 address should be us
+    EXPECT_EQ(arp->spa, htonl(interface.src_ip));
+    // Target MAC should be {0x6, 0x5, 0x4, ...}
+    for (int i = 0; i < 6; ++i) {
+        EXPECT_EQ(arp->tha[i], 6 - i);
+    }
+    // Target protocol IPv4 address should be 192.1.1.1
+    uint32_t tpa;
+    inet_pton(AF_INET, src_protocol, &tpa);
+    EXPECT_EQ(arp->tpa, tpa);
 }
 
 /**
