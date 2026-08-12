@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <fcntl.h>
 #include <linux/if_ether.h>
+#include <net/if_arp.h>
 #include <arpa/inet.h>
 extern "C" {
 #include "ethernet.h"
@@ -38,6 +39,7 @@ protected:
 
 /**
  * Test whether or not an ARP for our interface IP correctly caches
+ * and responds
  */
 TEST_F(ARPTest, recvArpForUsTest) {
     ar_t ar;
@@ -48,7 +50,7 @@ TEST_F(ARPTest, recvArpForUsTest) {
     arp->pro = htons(ETH_P_IP);
     arp->hln = 6; // hardware proto. length
     arp->pln = 4; // protocol length (IPv4 = 4)
-    arp->op = htons(1); // ARP REQUEST
+    arp->op = htons(ARPOP_REQUEST); // ARP REQUEST
     memcpy(arp->sha, src_mac, 6);
     inet_pton(AF_INET, src_protocol, &arp->spa);
     arp->tpa = htonl(interface_ip()); // target is us
@@ -66,6 +68,20 @@ TEST_F(ARPTest, recvArpForUsTest) {
     // check if ARP cache has correct IP -> MAC translation
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(mac_value[i], i + 1);
+    }
+
+    char buf[1500];
+    lseek(interface.fd, 0, SEEK_SET);
+    if (read(interface.fd, buf, 1500) < 0) {
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+    // check if written REPLY is correct
+    arp = (ar_t *)(buf + sizeof(eth_hdr_t));
+    EXPECT_EQ(arp->op, htons(ARPOP_REPLY));
+    EXPECT_EQ(arp->spa, htonl(interface.src_ip));
+    for (int i = 0; i < 6; ++i) {
+        EXPECT_EQ(arp->sha[i], i + 1);
     }
 }
 

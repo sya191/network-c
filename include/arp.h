@@ -65,7 +65,7 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * 
  * @note typically caller would pass an opaque void * ptr
  * 
- * @returns 0 if an ARP REPLY needs to be sent, -1 otherwise.
+ * @returns 0 if an ARP REPLY was sent, -1 otherwise.
  */
 int recv_arp(ar_t *arp_msg, iface_t interface);
 
