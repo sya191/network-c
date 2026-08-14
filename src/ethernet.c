@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int handle_eth(void *addr, iface_t interface)
+int recv_eth(void *addr, iface_t interface)
 {
     if (addr == NULL) {
         return -1;

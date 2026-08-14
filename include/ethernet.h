@@ -22,7 +22,7 @@ typedef struct {
  * @param addr the ethernet frame address (usually in a buffer).
  * @param interface @see iface.h
  */
-int handle_eth(void *addr, iface_t interface);
+int recv_eth(void *addr, iface_t interface);
 
 /**
  * Adds ethernet header and sends payload to an IPv4 address

@@ -27,6 +27,6 @@ int main()
             perror("recv_interface()");
             return -1;
         }
-        handle_eth((void *)buf, interface);
+        recv_eth((void *)buf, interface);
     }
 }
