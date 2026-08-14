@@ -13,7 +13,7 @@ int recv_eth(void *addr, iface_t interface)
     }
     // cast addr to eth_hdr
     eth_hdr_t *hdr = (eth_hdr_t *)addr;
-    void *payload = hdr + sizeof(eth_hdr_t);
+    void *payload = (void *)hdr + sizeof(eth_hdr_t);
     switch (ntohs(hdr->ethertype)) {
         case ETH_P_ARP:
             return recv_arp(payload, interface);

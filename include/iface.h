@@ -10,5 +10,5 @@ typedef struct {
     ssize_t (*write_interface)(int fd, const void *buf, size_t len); // function pointer to a defined write function
     int fd; // file descriptor to write to
     uint32_t src_ip;
-    uint8_t src_mac[6];
+    uint8_t src_mac[6]; // make sure the LSB of the first byte is 0 for unicast address
 } iface_t;

@@ -52,6 +52,7 @@ static void update_ip(uint32_t ip, uint8_t src[6])
 // TODO: recv_arp should call the ethernet module to send frames
 int recv_arp(ar_t *arp_msg, iface_t interface) 
 {   
+    printf("Recieved ARP\n");
     // take care to convert byte order for multibyte values
     uint16_t hardware_id = ntohs(arp_msg->hrd);
     if (hardware_id == ARPHRD_ETHER) {
@@ -97,6 +98,7 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
                         sizeof(ar_t), 
                         interface
                     );
+                    printf("SENT ARP TO MAC\n");
 
                     return 0;
                 }
