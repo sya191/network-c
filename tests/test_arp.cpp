@@ -20,7 +20,7 @@ protected:
             exit(EXIT_FAILURE);
         }
         interface = {
-            .write_interface = write,
+            .write = write,
             .fd = fd,
             .src_ip = convert_ip("192.168.1.104"),  
             .src_mac = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6},

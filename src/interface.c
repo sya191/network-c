@@ -40,7 +40,7 @@ ssize_t write_interface(int fd, const void *buf, size_t len)
     return sendto(fd, buf, len, 0, (struct sockaddr *)&sock_struct, sizeof(sock_struct));
 }
 
-ssize_t recv_interface(int fd, char *buf, size_t len)
+ssize_t read_interface(int fd, void *buf)
 {
-    return read(fd, buf, len);
+    return read(fd, buf, 1500);
 }

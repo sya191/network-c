@@ -1,4 +1,3 @@
-#define ETHBUFSIZ 1518
 #include "ethernet.h"
 #include "arp.h"
 #include "interface.h"
@@ -17,20 +16,14 @@ int main()
 {
     iface_t interface = {
         .fd = create_interface(),
-        .write_interface = write_interface,
+        .write = write_interface,
+        .read = read_interface,
         .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
-        .src_ip = convert_ip("192.168.104")
+        .src_ip = convert_ip("192.168.1.104")
     };
 
-    // set up buffer
-    char buf[ETHBUFSIZ];
     while (1) {
-        ssize_t bytes = recv_interface(interface.fd, buf, sizeof(buf));
-        if (bytes < 0) {
-            perror("recv_interface()");
-            return -1;
-        }
-        recv_eth((void *)buf, interface);
+        printf("Ethertype: %hu\n", recv_eth(interface));
         // broadcast_arp(convert_ip("192.168.1.103"), interface);
     }
 }

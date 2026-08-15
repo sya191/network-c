@@ -6,22 +6,25 @@
 #include <string.h>
 #include <stdlib.h>
 
-int recv_eth(void *addr, iface_t interface)
+int recv_eth(iface_t interface)
 {
-    if (addr == NULL) {
+    // read eth frame into buffer
+    uint8_t buf[1500];
+    if (interface.read(interface.fd, buf) < 0) {
         return -1;
     }
     // cast addr to eth_hdr
-    eth_hdr_t *hdr = (eth_hdr_t *)addr;
+    eth_hdr_t *hdr = (eth_hdr_t *)buf;
     void *payload = (void *)hdr + sizeof(eth_hdr_t);
-    switch (ntohs(hdr->ethertype)) {
+    uint16_t ethertype = ntohs(hdr->ethertype);
+    switch (ethertype) {
         case ETH_P_ARP:
-            return recv_arp(payload, interface);
+            recv_arp(payload, interface);
         default:
             break;
     }
 
-    return 0;
+    return ethertype;
 }
 
 int send_eth_to_ip(
@@ -47,7 +50,7 @@ int send_eth_to_ip(
     ((eth_hdr_t *)buf)->ethertype = htons(ethertype);
     // copy payload to buffer
     memcpy(buf + sizeof(eth_hdr_t), payload, len);
-    interface.write_interface(interface.fd, buf, size);
+    interface.write(interface.fd, buf, size);
 
     return 0;
 }
@@ -71,7 +74,7 @@ int send_eth_to_mac(
 
     // copy payload to buffer
     memcpy(buf + sizeof(eth_hdr_t), payload, len);
-    if (interface.write_interface(interface.fd, buf, size) < 0) {
+    if (interface.write(interface.fd, buf, size) < 0) {
         perror("Write Interface");
         exit(EXIT_FAILURE);
     }

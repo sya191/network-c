@@ -18,4 +18,4 @@ ssize_t write_interface(int fd, const void *buf, size_t len);
 /**
  * Reads from the interface
  */
-ssize_t recv_interface(int fd, char *buf, size_t len);
+ssize_t read_interface(int fd, void *buf);

@@ -17,12 +17,13 @@ typedef struct {
 #pragma pack(pop)
 
 /**
- * Big switch case to handle each ethertype
+ * Reads an ethernet frame from the defined interface and handles the payload accordingly
  * 
- * @param addr the ethernet frame address (usually in a buffer).
  * @param interface @see iface.h
+ * 
+ * @returns the ethertype handled on success, otherwise -1 on read failure
  */
-int recv_eth(void *addr, iface_t interface);
+int recv_eth(iface_t interface);
 
 /**
  * Adds ethernet header and sends payload to an IPv4 address
