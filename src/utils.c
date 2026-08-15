@@ -17,7 +17,7 @@ void swap(void *src, void *dest, size_t size)
     tmp = NULL;
 }
 
-uint32_t convert_ip(char *src)
+uint32_t convert_ip(const char *src)
 {
     uint32_t dest;
     if (inet_pton(AF_INET, src, &dest) < 1) {

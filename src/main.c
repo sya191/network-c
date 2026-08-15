@@ -18,10 +18,9 @@ int main()
     iface_t interface = {
         .fd = create_interface(),
         .write_interface = write_interface,
-        .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7}
+        .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
+        .src_ip = convert_ip("192.168.104")
     };
-    inet_pton(AF_INET, "192.168.1.104", &interface.src_ip);
-    interface.src_ip = ntohl(interface.src_ip);
 
     // set up buffer
     char buf[ETHBUFSIZ];

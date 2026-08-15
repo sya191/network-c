@@ -8,6 +8,7 @@ extern "C" {
 #include "arp.h"
 #include "interface.h"
 #include "iface.h"
+#include "utils.h"
 }
 
 class ARPTest: public ::testing::Test {
@@ -21,7 +22,7 @@ protected:
         interface = {
             .write_interface = write,
             .fd = fd,
-            .src_ip = interface_ip(),
+            .src_ip = convert_ip("192.168.1.104"),  
             .src_mac = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6},
         };
     }
@@ -52,7 +53,7 @@ TEST_F(ARPTest, recvArpCacheTest) {
     arp->op = htons(ARPOP_REQUEST); // ARP REQUEST
     memcpy(arp->sha, src_mac, 6);
     inet_pton(AF_INET, src_protocol, &arp->spa);
-    arp->tpa = htonl(interface_ip()); // target is us
+    arp->tpa = htonl(convert_ip("192.168.1.104")); // target is us
 
     // Should return 0 as the ARP is for our interface IP
     ASSERT_EQ(recv_arp(arp, interface), 0);
@@ -86,7 +87,7 @@ TEST_F(ARPTest, recvArpResponseTest) {
     arp->op = htons(ARPOP_REQUEST); // ARP REQUEST
     memcpy(arp->sha, src_mac, 6);
     inet_pton(AF_INET, src_protocol, &arp->spa);
-    arp->tpa = htonl(interface_ip()); // target is us
+    arp->tpa = htonl(convert_ip("192.168.1.104")); // target is us
 
     // Should return 0 as the ARP is for our interface IP
     EXPECT_EQ(recv_arp(arp, interface), 0);

@@ -11,23 +11,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
-void interface_mac(uint8_t *dest)
-{
-    uint8_t mac[6] = MAC;
-    memcpy(dest, mac, sizeof(mac));
-}
-
-uint32_t interface_ip()
-{
-    uint32_t dest;
-    if (inet_pton(AF_INET, IPADDR, &dest) < 1) {
-        perror("inet_pton()");
-        exit(EXIT_FAILURE);
-    }
-    return ntohl(dest);
-}
-
 int create_interface()
 {
     int fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
