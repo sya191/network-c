@@ -148,3 +148,33 @@ TEST_F(ARPTest, recvArpNotForUsTest) {
     src_prot_network = ntohl(src_prot_network);
     ASSERT_EQ(lookup_ip(mac_value, src_prot_network), -1);
 }
+
+/**
+ * Test ARP reply caching
+ */
+TEST_F(ARPTest, recvArpReply) {
+    ar_t ar;
+    ar_t *arp = &ar;
+
+    // format arp message
+    arp->hrd = htons(1); // Ethernet msg
+    arp->pro = htons(ETH_P_IP); // IP
+    arp->hln = 6; // hardware proto. length
+    arp->pln = 4; // protocol length (IPv4 = 4)
+    arp->op = htons(ARPOP_REPLY); // ARP REPLY
+    memcpy(arp->sha, src_mac, 6); // source MAC
+    arp->spa = htonl(convert_ip(src_protocol));
+    arp->tpa = htonl(interface.src_ip); // target ip is US
+    memcpy(arp->tha, interface.src_mac, 6); // target mac is US
+
+    // Should return -1 as no ARP reply is needed from us
+    ASSERT_EQ(recv_arp(arp, interface), -1);
+
+    // check if ARP cache has cached IP addr
+    uint8_t mac_value[6];
+    ASSERT_EQ(lookup_ip(mac_value, convert_ip(src_protocol)), 0);
+
+    for (int i = 0; i < 6; ++i) {
+        EXPECT_EQ(mac_value[i], src_mac[i]);
+    }
+}
