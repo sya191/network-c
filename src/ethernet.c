@@ -78,8 +78,8 @@ int send_eth_to_ip(
         // calculate difference between last time stamp
         double current_time = get_timestamp();
         double diff = current_time - last_arp;
-        // broadcast arp every 1 second
-        if (diff > 1) {
+        // broadcast arp every 0.25 second
+        if (diff > 0.25) {
             broadcast_arp(target_ip, interface);
             last_arp = current_time;
         }

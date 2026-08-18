@@ -18,12 +18,12 @@ static void *rx_thread(void *interface)
     return NULL;
 }
 
-void start_rx(iface_t interface)
+void start_rx(iface_t *interface)
 {
     if (running) return;
 
     running = true;
-    if (pthread_create(&rx, NULL, rx_thread, &interface) != 0) {
+    if (pthread_create(&rx, NULL, rx_thread, interface) != 0) {
         perror("pthread_create()");
         exit(EXIT_FAILURE);
     }

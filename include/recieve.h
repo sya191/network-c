@@ -5,7 +5,7 @@
 /**
  * Starts the recieve pipeline. Allows stack to asynchronously handle incoming ethernet frames to interface.
  */
-void start_rx(iface_t interface);
+void start_rx(iface_t *interface);
 /**
  * Stops the recieve pipeline
  */

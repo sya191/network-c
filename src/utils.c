@@ -40,16 +40,10 @@ ssize_t test_write(int fd, const void *buf, size_t len)
 
 void swap(void *src, void *dest, size_t size)
 {
-    void *tmp = malloc(size);
-    if (tmp == NULL) {
-        perror("malloc()");
-        exit(EXIT_FAILURE);
-    }
-    memcpy(tmp, dest, size);
+    char buf[size];
+    memcpy(buf, dest, size);
     memcpy(dest, src, size);
-    memcpy(src, tmp, size);
-    free(tmp);
-    tmp = NULL;
+    memcpy(src, buf, size);
 }
 
 uint32_t convert_ip(const char *src)
