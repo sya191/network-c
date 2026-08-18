@@ -1,6 +1,7 @@
 #include "arp.h"
 #include "utils.h"
 #include "ethernet.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -10,6 +11,7 @@
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
 
+static pthread_rwlock_t CACHE_LOCK = PTHREAD_RWLOCK_INITIALIZER;
 static arp_cache_t arp_cache = {
     .data = {{0}},
     .size = 0
@@ -17,19 +19,34 @@ static arp_cache_t arp_cache = {
 
 int lookup_ip(uint8_t mac_dest[6], uint32_t ip)
 {
+    if (pthread_rwlock_rdlock(&CACHE_LOCK) != 0) {
+        perror("pthread_rwlock_rdlock()");
+        exit(EXIT_FAILURE);
+    }
+    int retval = -1;
     for (unsigned int i = 0; i < arp_cache.size; ++i) {
         if (arp_cache.data[i].ip == ip) {
             memcpy(mac_dest, arp_cache.data[i].mac, 6);
-            return 0;
+            retval = 0;
+            goto cleanup;
         }
     }
+cleanup:
+    if (pthread_rwlock_unlock(&CACHE_LOCK) != 0) {
+        perror("pthread_rwlock_rdlock()");
+        exit(EXIT_FAILURE);
+    }
 
-    return -1;
+    return retval;
 }
 
 // Update an ip entry with new MAC
 static void update_ip(uint32_t ip, uint8_t src[6])
 {
+    if (pthread_rwlock_wrlock(&CACHE_LOCK) != 0) {
+        perror("pthread_rwlock_wrlock()");
+        exit(EXIT_FAILURE);
+    }
     // check if ip is in table
     int idx = -1;
     for (unsigned int i = 0; i < arp_cache.size; ++i) {
@@ -47,12 +64,15 @@ static void update_ip(uint32_t ip, uint8_t src[6])
         memcpy(arp_cache.data[sz].mac, src, 6);
         arp_cache.size = (sz + 1) % ARPCACHEMAX;
     }
+    if (pthread_rwlock_unlock(&CACHE_LOCK) != 0) {
+        perror("pthread_rwlock_wrlock()");
+        exit(EXIT_FAILURE);
+    }
 }
 
 // TODO: recv_arp should call the ethernet module to send frames
 int recv_arp(ar_t *arp_msg, iface_t interface) 
 {   
-    printf("Recieved ARP\n");
     // take care to convert byte order for multibyte values
     uint16_t hardware_id = ntohs(arp_msg->hrd);
     if (hardware_id == ARPHRD_ETHER) {
@@ -72,7 +92,6 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
             }
             // if we are the target ip address
             if (target_ip == interface.src_ip) {
-                printf("THIS IS AN ARP FOR US\n");
                 // fill the hardware target address with our MAC
                 memcpy(arp_msg->tha, interface.src_mac, 6);
                 // if the sender wasn't in our table
@@ -98,7 +117,6 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
                         sizeof(ar_t), 
                         interface
                     );
-                    printf("SENT ARP TO MAC\n");
 
                     return 0;
                 }

@@ -1,10 +1,36 @@
 #include "ethernet.h"
 #include "arp.h"
+#include "utils.h"
 #include <linux/if_ether.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+// untested
+static bool 
+mac_for_us(uint8_t mac[6], iface_t interface)
+{
+    // check if it is broadcast/interface mac
+    bool is_us = true;
+    bool is_broadcast = true;
+    for (int i = 0; i < 6; ++i) {
+        if (mac[i] != interface.src_mac[i]) {
+            is_us = false;
+        }
+    }
+
+    if (is_us) return true;
+
+    for (int i = 0; i < 6; ++i) {
+        if (mac[i] != 0xff) {
+            is_broadcast = false;
+        }
+    }
+
+    return is_broadcast;
+}
 
 int recv_eth(iface_t interface)
 {
@@ -15,6 +41,12 @@ int recv_eth(iface_t interface)
     }
     // cast addr to eth_hdr
     eth_hdr_t *hdr = (eth_hdr_t *)buf;
+
+    // filter mac destination
+    if (!mac_for_us(hdr->mac_dest, interface)) {
+        return -1;
+    }
+
     void *payload = (void *)hdr + sizeof(eth_hdr_t);
     uint16_t ethertype = ntohs(hdr->ethertype);
     switch (ethertype) {
@@ -39,10 +71,22 @@ int send_eth_to_ip(
 
     // check if target_ip is in ARP cache
     uint8_t *target_mac = ((eth_hdr_t *)buf)->mac_dest;
-    if (lookup_ip(target_mac, target_ip) == -1) {
-        // target mac not found, send ARP REQUEST
-        broadcast_arp(target_ip, interface);
-        return -1; // notify caller with -1 retval
+    double time_start = get_timestamp();
+    double last_arp = -1;
+    // TODO: MAKE lookup_ip and update_ip thread safe
+    while (lookup_ip(target_mac, target_ip) < 0) {
+        // calculate difference between last time stamp
+        double current_time = get_timestamp();
+        double diff = current_time - last_arp;
+        // broadcast arp every 1 second
+        if (diff > 1) {
+            broadcast_arp(target_ip, interface);
+            last_arp = current_time;
+        }
+        // try for 5 seconds
+        if (current_time - time_start > 5) {
+            return -1;
+        }
     }
 
     uint8_t *source_mac = ((eth_hdr_t *)buf)->mac_src;

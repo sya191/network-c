@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 // the test functions below should mimic a NIC read/write interface
 // i.e. they read and write at most one frame per time
@@ -59,4 +60,15 @@ uint32_t convert_ip(const char *src)
         exit(EXIT_FAILURE);
     }
     return ntohl(dest);
+}
+
+double get_timestamp()
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
+        perror("clock_gettime");
+        exit(EXIT_FAILURE);
+    }
+
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }

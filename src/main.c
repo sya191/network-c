@@ -1,13 +1,7 @@
-#include "ethernet.h"
-#include "arp.h"
+#include "recieve.h"
 #include "interface.h"
 #include "iface.h"
 #include "utils.h"
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <linux/if.h>
-#include <arpa/inet.h>
 
 /**
  * Need to run with sudo
@@ -22,8 +16,8 @@ int main()
         .src_ip = convert_ip("192.168.1.104")
     };
 
-    while (1) {
-        printf("Ethertype: %hu\n", recv_eth(interface));
-        // broadcast_arp(convert_ip("192.168.1.103"), interface);
+    start_rx(interface);
+    for (;;) {
+
     }
 }

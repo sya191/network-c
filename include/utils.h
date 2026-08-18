@@ -8,3 +8,10 @@ ssize_t test_read(int fd, void *buf);
 ssize_t test_write(int fd, const void *buf, size_t len);
 void swap(void *src, void *dest, size_t size);
 uint32_t convert_ip(const char *src);
+
+/**
+ * @returns double precision float of current timestamp (MONOTONIC)
+ * 
+ * @note <seconds.milliseconds>
+ */
+double get_timestamp();
