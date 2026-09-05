@@ -116,7 +116,7 @@ TEST_F(FragmentTest, rangeOverlaps) {
 
 
 /**
- * Tests if correctly assembles fragmented datagram
+ * Tests if correctly pushes fragmented datagrams up stack
  */
 TEST_F(FragmentTest, recvTwoFragments) {
     // assemble IPv4 hdr + payload
@@ -151,4 +151,46 @@ TEST_F(FragmentTest, recvTwoFragments) {
     strncpy(payload, "rld!", 5);
 
     ASSERT_EQ(add_fragment((ip_t *)frag2, &interface), 254);
+}
+
+/**
+ * Tests if correctly assembles fragmented datagrams
+ */
+TEST_F(FragmentTest, correctAssembly) {
+    // assemble IPv4 hdr + payload
+    uint16_t size = sizeof(ip_t) + 8;
+    uint8_t frag1[sizeof(ip_t) + 8] = {0};
+    ip_t *hdr = (ip_t *)frag1;
+    hdr->total_len = htons(size);
+    // more fragments = 1, offset = 0
+    hdr->flags_offset = htons(0x2000);
+    hdr->identification = htons(0x1);
+    hdr->protocol = 254;
+
+    // set payload
+    char *payload = (char *)(hdr + 1);
+    // fragment by multiple of 8
+    strncpy(payload, "Hello Wo", 8);
+
+    // recv fragment
+    add_fragment((ip_t *)frag1, &interface);
+
+    // set up second fragment
+    size = sizeof(ip_t) + 5;
+    uint8_t frag2[size] = {0};
+    hdr = (ip_t *)frag2;
+    hdr->total_len = htons(size);
+    // more fragments = 0, offset = 1
+    hdr->flags_offset = htons(0x1);
+    hdr->identification = htons(0x1);
+    hdr->protocol = 254;
+    
+    payload = (char *)(hdr + 1);
+    strncpy(payload, "rld!", 5);
+
+    add_fragment((ip_t *)frag2, &interface);
+
+    char msg[13];
+    read(interface.fd, msg, 13);
+    ASSERT_EQ(strcmp(msg, "Hello World!"), 0);
 }
