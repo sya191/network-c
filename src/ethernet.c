@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// untested
 static bool 
 mac_for_us(uint8_t mac[6], iface_t interface)
 {
@@ -83,8 +82,8 @@ int send_eth_to_ip(
             broadcast_arp(target_ip, interface);
             last_arp = current_time;
         }
-        // try for 5 seconds
-        if (current_time - time_start > 5) {
+        // try for 2 seconds
+        if (current_time - time_start > 2) {
             return -1;
         }
     }

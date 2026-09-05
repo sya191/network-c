@@ -1,3 +1,4 @@
+#pragma once
 #define DEFAULT_ENTRIES_SIZ 4 // we just need 3 entries for now (default gateway, subnet, broadcast)
 #include "iface.h"
 #include <stdint.h>
@@ -65,3 +66,8 @@ int send_ip(
     uint8_t *protocol,
     size_t len,
     iface_t *interface);
+
+/**
+ * Pushes a generic payload up the stack
+ */
+void push_up_stack(uint8_t protocol, void *payload, size_t len, iface_t *interface);

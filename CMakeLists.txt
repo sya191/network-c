@@ -12,7 +12,7 @@ list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/main\\.c$")
 
 add_library(network-c-lib STATIC ${LIB_SOURCES})
 target_include_directories(network-c-lib PUBLIC include)
-target_compile_options(network-c-lib PRIVATE -Wall -Wextra)
+target_compile_options(network-c-lib PRIVATE -Wall -Wextra -g)
 
 add_executable(main src/main.c)
 target_link_libraries(main PRIVATE network-c-lib)

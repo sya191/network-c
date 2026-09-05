@@ -11,6 +11,7 @@ add_executable(unit_tests
     ${TESTS}
 )
 
+target_compile_options(unit_tests PRIVATE -g)
 target_link_libraries(unit_tests
     network-c-lib
     GTest::gtest_main
