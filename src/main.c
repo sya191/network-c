@@ -2,6 +2,8 @@
 #include "interface.h"
 #include "iface.h"
 #include "ethernet.h"
+#include "ip.h"
+#include "string.h"
 #include "utils.h"
 #include <linux/if_ether.h>
 
@@ -19,14 +21,24 @@ int main()
     };
 
     start_rx(&interface);
+
+    char ip_frame[sizeof(ip_t) + 13] = {0};
+    ip_t *hdr = (ip_t *)ip_frame;
+    uint32_t macbook_ip = convert_ip("192.168.1.102");
+    hdr->dest_addr = ntohl(macbook_ip);
+    hdr->src_addr = ntohl(interface.src_ip);
+
+    // copy payload
     char *msg = "Hello World!";
+    memcpy(ip_frame + sizeof(ip_t), msg, 13);
+
 
     for (;;) {
         send_eth_to_ip(
-            msg,
+            ip_frame,
             ETH_P_IP,
-            convert_ip("192.168.1.102"),
-            13,
+            macbook_ip,
+            sizeof(ip_t) + 13,
             interface
         );
     }
