@@ -6,6 +6,7 @@
 #include "string.h"
 #include "utils.h"
 #include <linux/if_ether.h>
+#include <arpa/inet.h>
 
 /**
  * Need to run with sudo
