@@ -92,8 +92,10 @@ int send_ip(
     hdr->total_len = htons(total_len);
     hdr->TTL = 64; // default
     hdr->ver_IHL = 0x45; // IPv4 + min header length (20 bytes)
-    // calc hdr checksum
+    // calc hdr checksum (don't convert because previous fields are already in network byte order)
     hdr->checksum = checksum(buf, sizeof(ip_t));
+    // copy payload
+    memcpy(buf + sizeof(ip_t), payload, len);
 
     // send to ethernet module
     return send_eth_to_ip(

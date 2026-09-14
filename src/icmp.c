@@ -34,7 +34,9 @@ void echo_request(
     void *payload = echo + 1;
     memcpy(payload, data, len);
     // checksum over entire icmp frame
-    icmp->checksum = ntohs(checksum(buf, size));
+    icmp->checksum = 0;
+    // no need to convert because 16-bit words for checksum calc is already in network order
+    icmp->checksum = checksum(buf, size); 
 
     // TODO: send to IP
     send_ip(target_ip, buf, IPPROTO_ICMP, size, interface);
