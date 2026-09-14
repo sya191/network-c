@@ -47,7 +47,7 @@ TEST_F(EthernetTest, DemuxOnEthertype) {
     memcpy(eth_hdr->mac_dest, interface.src_mac, 6);
     // write to test file
     test_write(interface.fd, buf, sizeof(buf));
-    ASSERT_EQ(recv_eth(interface), ETH_P_ARP);
+    ASSERT_EQ(recv_eth(&interface), ETH_P_ARP);
 }
 
 // Tests whether ethernet frame is correctly formatted on send to MAC
@@ -58,7 +58,7 @@ TEST_F(EthernetTest, SendToMacDirect) {
         ETH_P_IP,
         target_mac,
         sizeof("Hello World!"),
-        interface
+        &interface
     );
 
     ASSERT_EQ(res, 0);
@@ -87,7 +87,7 @@ TEST_F(EthernetTest, SendToIPNoMAC) {
         ETH_P_IP,
         convert_ip(target_ip),
         sizeof("Hello World!"),
-        interface
+        &interface
     );
 
     // Should be unable to find IP in ARP cache
@@ -121,7 +121,7 @@ TEST_F(EthernetTest, SendToIPHaveMAC) {
     arp->tpa = htonl(interface.src_ip); // target ip is US
     memcpy(arp->tha, interface.src_mac, 6); // target mac is US
 
-    EXPECT_EQ(recv_arp(arp, interface), -1);
+    EXPECT_EQ(recv_arp(arp, &interface), -1);
 
     const char *msg = "Hello World!";
     int res = send_eth_to_ip(
@@ -129,7 +129,7 @@ TEST_F(EthernetTest, SendToIPHaveMAC) {
         ETH_P_IP,
         convert_ip(target_ip),
         sizeof("Hello World!"),
-        interface
+        &interface
     );
 
     // Should be able to find IP in ARP cache

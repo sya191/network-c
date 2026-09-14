@@ -67,7 +67,7 @@ int lookup_ip(uint8_t dest[6], uint32_t ip);
  * 
  * @returns 0 if an ARP REPLY was sent, -1 otherwise.
  */
-int recv_arp(ar_t *arp_msg, iface_t interface);
+int recv_arp(ar_t *arp_msg, iface_t *interface);
 
 
 /**
@@ -76,6 +76,6 @@ int recv_arp(ar_t *arp_msg, iface_t interface);
  * @param target - the IP address we wish to know the MAC (in host byte order) 
  * @param interface - @see iface.h
  */
-void broadcast_arp(uint32_t target, iface_t interface);
+void broadcast_arp(uint32_t target, iface_t *interface);
 
 void clear_cache();

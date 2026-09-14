@@ -23,7 +23,7 @@ typedef struct {
  * 
  * @returns the ethertype handled on success, otherwise -1 on read failure
  */
-int recv_eth(iface_t interface);
+int recv_eth(iface_t *interface);
 
 /**
  * Adds ethernet header and sends payload to an IPv4 address
@@ -42,11 +42,11 @@ int send_eth_to_ip(
     uint16_t ethertype,
     uint32_t target_ip,
     size_t len,
-    iface_t interface);
+    iface_t *interface);
 
 int send_eth_to_mac(
     void *payload,
     uint16_t ethertype,
     uint8_t target_mac[6],
     size_t len,
-    iface_t interface);
+    iface_t *interface);

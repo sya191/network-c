@@ -62,8 +62,9 @@ int recv_ip(ip_t *ip_msg, iface_t *interface);
  * @returns 0 on success, -1 on failure (upper layer modules must decide what to do)
  */
 int send_ip(
+    uint32_t dest_addr,
     void *payload,
-    uint8_t *protocol,
+    uint8_t protocol,
     size_t len,
     iface_t *interface);
 

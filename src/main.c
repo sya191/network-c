@@ -2,6 +2,7 @@
 #include "interface.h"
 #include "iface.h"
 #include "ethernet.h"
+#include "icmp.h"
 #include "ip.h"
 #include "string.h"
 #include "utils.h"
@@ -11,7 +12,7 @@
 /**
  * Need to run with sudo
  */
-int main()
+void spam_ip()
 {
     iface_t interface = {
         .fd = create_interface(),
@@ -40,7 +41,29 @@ int main()
             ETH_P_IP,
             macbook_ip,
             sizeof(ip_t) + 13,
-            interface
+            &interface
         );
+    }
+}
+
+/**
+ * Need to run with sudo
+ */
+int main()
+{
+    iface_t interface = {
+        .fd = create_interface(),
+        .write = write_interface,
+        .read = read_interface,
+        .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
+        .src_ip = convert_ip("192.168.1.104")
+    };
+
+    start_rx(&interface);
+
+    // spam echo request
+    uint32_t macbook_ip = convert_ip("192.168.1.102");
+    for (int i = 0; i < 100; i++) {
+        echo_request(macbook_ip, i, NULL, 0, &interface);
     }
 }

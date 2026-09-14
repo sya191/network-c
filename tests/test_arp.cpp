@@ -56,7 +56,7 @@ TEST_F(ARPTest, recvArpCacheTest) {
     arp->tpa = htonl(convert_ip("192.168.1.104")); // target is us
 
     // Should return 0 as the ARP is for our interface IP
-    ASSERT_EQ(recv_arp(arp, interface), 0);
+    ASSERT_EQ(recv_arp(arp, &interface), 0);
 
     // check if ARP cache has cached IP addr
     uint8_t mac_value[6];
@@ -90,7 +90,7 @@ TEST_F(ARPTest, recvArpResponseTest) {
     arp->tpa = htonl(convert_ip("192.168.1.104")); // target is us
 
     // Should return 0 as the ARP is for our interface IP
-    EXPECT_EQ(recv_arp(arp, interface), 0);
+    EXPECT_EQ(recv_arp(arp, &interface), 0);
 
     char buf[1500];
     lseek(interface.fd, 0, SEEK_SET);
@@ -139,7 +139,7 @@ TEST_F(ARPTest, recvArpNotForUsTest) {
     arp->tpa = htonl(0); // target is NOT us
 
     // Should return -1 as the ARP is not for our IP addr
-    ASSERT_EQ(recv_arp(arp, interface), -1);
+    ASSERT_EQ(recv_arp(arp, &interface), -1);
 
     // check if ARP cache has cached IP addr (should not because we've never talked)
     uint8_t mac_value[6];
@@ -168,7 +168,7 @@ TEST_F(ARPTest, recvArpReply) {
     memcpy(arp->tha, interface.src_mac, 6); // target mac is US
 
     // Should return -1 as no ARP reply is needed from us
-    ASSERT_EQ(recv_arp(arp, interface), -1);
+    ASSERT_EQ(recv_arp(arp, &interface), -1);
 
     // check if ARP cache has cached IP addr
     uint8_t mac_value[6];

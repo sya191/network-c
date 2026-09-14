@@ -12,7 +12,7 @@ static void *rx_thread(void *interface)
 {
     iface_t *iface = (iface_t *)interface;
     while (running) {
-        recv_eth(*iface);
+        recv_eth(iface);
     }
 
     return NULL;

@@ -71,7 +71,7 @@ static void update_ip(uint32_t ip, uint8_t src[6])
 }
 
 // TODO: recv_arp should call the ethernet module to send frames
-int recv_arp(ar_t *arp_msg, iface_t interface) 
+int recv_arp(ar_t *arp_msg, iface_t *interface) 
 {   
     // take care to convert byte order for multibyte values
     uint16_t hardware_id = ntohs(arp_msg->hrd);
@@ -91,9 +91,9 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
                 merge_flag = true;
             }
             // if we are the target ip address
-            if (target_ip == interface.src_ip) {
+            if (target_ip == interface->src_ip) {
                 // fill the hardware target address with our MAC
-                memcpy(arp_msg->tha, interface.src_mac, 6);
+                memcpy(arp_msg->tha, interface->src_mac, 6);
                 // if the sender wasn't in our table
                 if (merge_flag == false) {
                     uint8_t *mac = arp_msg->sha;
@@ -127,7 +127,7 @@ int recv_arp(ar_t *arp_msg, iface_t interface)
     return -1;
 }
 
-void broadcast_arp(uint32_t target, iface_t interface)
+void broadcast_arp(uint32_t target, iface_t *interface)
 {
     // Build ARP payload
     ar_t arp_msg;
@@ -137,8 +137,8 @@ void broadcast_arp(uint32_t target, iface_t interface)
     ar->hln = ETH_ALEN;
     ar->pln = sizeof(struct in_addr);
     ar->op = htons(ARPOP_REQUEST);
-    memcpy(ar->sha, interface.src_mac, 6);
-    ar->spa = htonl(interface.src_ip);
+    memcpy(ar->sha, interface->src_mac, 6);
+    ar->spa = htonl(interface->src_ip);
     ar->tpa = htonl(target);
 
     uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

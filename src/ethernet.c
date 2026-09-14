@@ -9,13 +9,13 @@
 #include <stdbool.h>
 
 static bool 
-mac_for_us(uint8_t mac[6], iface_t interface)
+mac_for_us(uint8_t mac[6], iface_t *interface)
 {
     // check if it is broadcast/interface mac
     bool is_us = true;
     bool is_broadcast = true;
     for (int i = 0; i < 6; ++i) {
-        if (mac[i] != interface.src_mac[i]) {
+        if (mac[i] != interface->src_mac[i]) {
             is_us = false;
         }
     }
@@ -31,11 +31,11 @@ mac_for_us(uint8_t mac[6], iface_t interface)
     return is_broadcast;
 }
 
-int recv_eth(iface_t interface)
+int recv_eth(iface_t *interface)
 {
     // read eth frame into buffer
     uint8_t buf[1500];
-    if (interface.read(interface.fd, buf) < 0) {
+    if (interface->read(interface->fd, buf) < 0) {
         return -1;
     }
     // cast addr to eth_hdr
@@ -63,7 +63,7 @@ int send_eth_to_ip(
     uint16_t ethertype,
     uint32_t target_ip,
     size_t len,
-    iface_t interface)
+    iface_t *interface)
 {
     size_t size = sizeof(eth_hdr_t) + len;
     uint8_t buf[size];
@@ -89,11 +89,11 @@ int send_eth_to_ip(
     }
 
     uint8_t *source_mac = ((eth_hdr_t *)buf)->mac_src;
-    memcpy(source_mac, interface.src_mac, 6);
+    memcpy(source_mac, interface->src_mac, 6);
     ((eth_hdr_t *)buf)->ethertype = htons(ethertype);
     // copy payload to buffer
     memcpy(buf + sizeof(eth_hdr_t), payload, len);
-    interface.write(interface.fd, buf, size);
+    interface->write(interface->fd, buf, size);
 
     return 0;
 }
@@ -103,7 +103,7 @@ int send_eth_to_mac(
     uint16_t ethertype,
     uint8_t target_mac[6],
     size_t len,
-    iface_t interface)
+    iface_t *interface)
 {
     size_t size = sizeof(eth_hdr_t) + len;
     uint8_t buf[size];
@@ -112,12 +112,12 @@ int send_eth_to_mac(
     uint8_t *dest_mac = ((eth_hdr_t *)buf)->mac_dest;
     memcpy(dest_mac, target_mac, 6);
     uint8_t *source_mac = ((eth_hdr_t *)buf)->mac_src;
-    memcpy(source_mac, interface.src_mac, 6);
+    memcpy(source_mac, interface->src_mac, 6);
     ((eth_hdr_t *)buf)->ethertype = htons(ethertype);
 
     // copy payload to buffer
     memcpy(buf + sizeof(eth_hdr_t), payload, len);
-    if (interface.write(interface.fd, buf, size) < 0) {
+    if (interface->write(interface->fd, buf, size) < 0) {
         perror("Write Interface");
         exit(EXIT_FAILURE);
     }
