@@ -1,4 +1,5 @@
 #include "ethernet.h"
+#include "ip.h"
 #include "arp.h"
 #include "utils.h"
 #include <linux/if_ether.h>
@@ -51,6 +52,9 @@ int recv_eth(iface_t *interface)
     switch (ethertype) {
         case ETH_P_ARP:
             recv_arp(payload, interface);
+            break;
+        case ETH_P_IP:
+            recv_ip(payload, interface);
         default:
             break;
     }

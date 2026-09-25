@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "checksum.h"
 #include "ethernet.h"
+#include "icmp.h"
 #include <arpa/inet.h>
 #include <linux/if_ether.h>
 #include <unistd.h>
@@ -12,12 +13,16 @@
 #include <stdbool.h>
 #include <netinet/in.h>
 
+// len = size of payload not including header
 void push_up_stack(uint8_t protocol, void *payload, size_t len, iface_t *interface)
 {
     switch (protocol) {
         case IPPROTO_IP:
             break;
         case IPPROTO_ICMP:
+            icmp_t *hdr = payload + sizeof(ip_t);
+            uint32_t src_ip = ntohl(((ip_t *)payload)->src_addr);
+            recv_icmp(src_ip, hdr, len, interface);
             break;
         case IPPROTO_IGMP:
             break;
@@ -40,8 +45,15 @@ void push_up_stack(uint8_t protocol, void *payload, size_t len, iface_t *interfa
 
 int recv_ip(ip_t *ip_msg, iface_t *interface)
 {
-    // TODO: remember to check the checksum
-   return 0;
+    if (checksum(ip_msg, sizeof(ip_t)) != 0xffff) {
+        return -1;
+    }
+
+    size_t len = ip_msg->total_len - sizeof(ip_t);
+
+    push_up_stack(ip_msg->protocol, ip_msg, len, interface);
+
+    return 0;
 }
 
 static int send_fragments(

@@ -34,3 +34,5 @@ void echo_request(
     void *data, 
     uint16_t len,
     iface_t *interface);
+
+int recv_icmp(uint32_t src_ip, icmp_t *payload, size_t len, iface_t *interface);

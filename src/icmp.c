@@ -5,14 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 
-static void echo_reply()
-{
-
-}
-
-/**
- * len = total length of data
- */
 void echo_request(
     uint32_t target_ip, 
     uint16_t seq, 
@@ -42,19 +34,50 @@ void echo_request(
     send_ip(target_ip, buf, IPPROTO_ICMP, size, interface);
 }
 
-int send_echo(echo_t type, iface_t *interface)
+/**
+ * src_ip = who sent the echo
+ */
+void echo_reply(
+    uint32_t src_ip, 
+    echo_hdr_t *hdr, // NETWORK ORDER
+    void *data, 
+    uint16_t len, 
+    iface_t *interface)
 {
-    switch (type) {
-        case ECHO_REPLY:
-            break;
-        case ECHO_REQUEST:
-            break;
-    }
+    // create buf
+    uint32_t size = sizeof(icmp_t) + sizeof(echo_hdr_t) + len;
+    uint8_t buf[size];
+    icmp_t *icmp = (icmp_t *)buf;
+    icmp->type = 0; // ECHO REPLY
+    icmp->code = 0; // ECHO
+    echo_hdr_t *echo = (echo_hdr_t *)(icmp + 1);
+    echo->ident = hdr->ident;
+    echo->seq = hdr->seq;
+    void *payload = echo + 1;
+    memcpy(payload, data, len);
+    // checksum over entire icmp frame
+    icmp->checksum = 0;
+    // no need to convert because 16-bit words for checksum calc is already in network order
+    icmp->checksum = checksum(buf, size); 
 
-    return 0;
+    // TODO: send to IP
+    send_ip(src_ip, buf, IPPROTO_ICMP, size, interface);
+
 }
 
-int recv_echo(void *payload) 
+int recv_icmp(uint32_t src_ip, icmp_t *data, size_t len, iface_t *interface)
 {
+    if (checksum(data, len) != 0xffff) {
+        return -1;
+    }
+
+    // echo request
+    if (data->code == 0 && data->code == 8) {
+        void *payload = (void *)data + sizeof(icmp_t) + sizeof(echo_hdr_t);
+        echo_hdr_t *hdr = (void *)data + sizeof(icmp_t);
+        echo_reply(src_ip, hdr, payload, len, interface);
+    }
+
+
     return 0;
 }
