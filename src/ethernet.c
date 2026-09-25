@@ -54,6 +54,7 @@ int recv_eth(iface_t *interface)
             recv_arp(payload, interface);
             break;
         case ETH_P_IP:
+            printf("Recieved IP message!\n");
             recv_ip(payload, interface);
         default:
             break;
@@ -97,6 +98,7 @@ int send_eth_to_ip(
     ((eth_hdr_t *)buf)->ethertype = htons(ethertype);
     // copy payload to buffer
     memcpy(buf + sizeof(eth_hdr_t), payload, len);
+    printf("WRITING TO NIC\n");
     interface->write(interface->fd, buf, size);
 
     return 0;

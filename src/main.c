@@ -63,7 +63,10 @@ int main()
 
     // spam echo request
     uint32_t macbook_ip = convert_ip("192.168.1.102");
-    for (int i = 0; i < 100; i++) {
-        echo_request(macbook_ip, i, NULL, 0, &interface);
+    // for (int i = 0; i < 100; i++) {
+    //     echo_request(macbook_ip, i, NULL, 0, &interface);
+    // }
+    for (;;) {
+
     }
 }

@@ -62,20 +62,20 @@ void echo_reply(
 
     // TODO: send to IP
     send_ip(src_ip, buf, IPPROTO_ICMP, size, interface);
-
 }
 
+// len = size of payload not including icmp header
 int recv_icmp(uint32_t src_ip, icmp_t *data, size_t len, iface_t *interface)
 {
-    if (checksum(data, len) != 0xffff) {
+    if (checksum(data, len + sizeof(icmp_t)) != 0) {
         return -1;
     }
 
     // echo request
-    if (data->code == 0 && data->code == 8) {
+    if (data->code == 0 && data->type == 8) {
         void *payload = (void *)data + sizeof(icmp_t) + sizeof(echo_hdr_t);
         echo_hdr_t *hdr = (void *)data + sizeof(icmp_t);
-        echo_reply(src_ip, hdr, payload, len, interface);
+        echo_reply(src_ip, hdr, payload, len - sizeof(echo_hdr_t), interface);
     }
 
 

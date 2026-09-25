@@ -22,7 +22,7 @@ void push_up_stack(uint8_t protocol, void *payload, size_t len, iface_t *interfa
         case IPPROTO_ICMP:
             icmp_t *hdr = payload + sizeof(ip_t);
             uint32_t src_ip = ntohl(((ip_t *)payload)->src_addr);
-            recv_icmp(src_ip, hdr, len, interface);
+            recv_icmp(src_ip, hdr, len - sizeof(icmp_t), interface);
             break;
         case IPPROTO_IGMP:
             break;
@@ -45,11 +45,13 @@ void push_up_stack(uint8_t protocol, void *payload, size_t len, iface_t *interfa
 
 int recv_ip(ip_t *ip_msg, iface_t *interface)
 {
-    if (checksum(ip_msg, sizeof(ip_t)) != 0xffff) {
+    if (checksum(ip_msg, sizeof(ip_t)) != 0) {
+        printf("Checksum failed: %x\n", checksum(ip_msg, sizeof(ip_t)));
         return -1;
     }
 
-    size_t len = ip_msg->total_len - sizeof(ip_t);
+    size_t len = ntohs(ip_msg->total_len) - sizeof(ip_t);
+    printf("Recieved payload of size %d\n", len);
 
     push_up_stack(ip_msg->protocol, ip_msg, len, interface);
 
@@ -82,6 +84,7 @@ int send_ip(
     // check if packet is larger than MTU
     // assume that MTU is 1500 for ethernet
     if (len > 1500) {
+        printf("TOO LARGE FRAGMENTING: SIZE [%d]\n", len);
         return send_fragments(
             dest_addr, 
             payload, 
