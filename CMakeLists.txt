@@ -9,13 +9,18 @@ project(network-c C CXX)
 
 file(GLOB_RECURSE LIB_SOURCES "src/*.c")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/main\\.c$")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/interface\\.c$")
+endif()
 
 add_library(network-c-lib STATIC ${LIB_SOURCES})
 target_include_directories(network-c-lib PUBLIC include)
 target_compile_options(network-c-lib PRIVATE -Wall -Wextra -g)
 
-add_executable(main src/main.c)
-target_link_libraries(main PRIVATE network-c-lib)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_executable(main src/main.c)
+    target_link_libraries(main PRIVATE network-c-lib)
+endif()
 
 option(BUILD_TESTS "Build unit tests" ON)
 if(BUILD_TESTS)
