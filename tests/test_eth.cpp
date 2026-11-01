@@ -1,20 +1,27 @@
-#include <gtest/gtest.h>
-#include <fcntl.h>
-#include <linux/if_ether.h>
-#include <net/if_arp.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <gtest/gtest.h>
+#include <net/if_arp.h>
 extern "C" {
-#include "ethernet.h"
 #include "arp.h"
-#include "interface.h"
+#include "ethernet.h"
 #include "iface.h"
+#include "interface.h"
 #include "utils.h"
 }
 
-class EthernetTest: public ::testing::Test {
-protected:
+class EthernetTest : public ::testing::Test {
+  protected:
     void SetUp() override {
-        int fd = open("./", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
+        char path[] = "/tmp/network_test_XXXXXX";
+        int fd = mkstemp(path);
+        if (fd == -1) {
+            perror("mkstemp");
+            exit(EXIT_FAILURE);
+        }
+        unlink(
+            path); // Unlink immediately: the file descriptor stays valid,
+                   // but the file is automatically wiped from disk when closed.
         if (fd == -1) {
             perror("open()");
             exit(EXIT_FAILURE);
@@ -23,7 +30,7 @@ protected:
             .write = test_write,
             .read = test_read,
             .fd = fd,
-            .src_ip = convert_ip("192.168.1.104"),  
+            .src_ip = convert_ip("192.168.1.104"),
             .src_mac = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6},
         };
     }
@@ -53,13 +60,8 @@ TEST_F(EthernetTest, DemuxOnEthertype) {
 // Tests whether ethernet frame is correctly formatted on send to MAC
 TEST_F(EthernetTest, SendToMacDirect) {
     const char *msg = "Hello World!";
-    int res = send_eth_to_mac(
-        (void *)msg,
-        ETH_P_IP,
-        target_mac,
-        sizeof("Hello World!"),
-        &interface
-    );
+    int res = send_eth_to_mac((void *)msg, ETH_P_IP, target_mac,
+                              sizeof("Hello World!"), &interface);
 
     ASSERT_EQ(res, 0);
 
@@ -82,13 +84,8 @@ TEST_F(EthernetTest, SendToMacDirect) {
 // Should send an ARP Request on behalf
 TEST_F(EthernetTest, SendToIPNoMAC) {
     const char *msg = "Hello World!";
-    int res = send_eth_to_ip(
-        (void *)msg,
-        ETH_P_IP,
-        convert_ip(target_ip),
-        sizeof("Hello World!"),
-        &interface
-    );
+    int res = send_eth_to_ip((void *)msg, ETH_P_IP, convert_ip(target_ip),
+                             sizeof("Hello World!"), &interface);
 
     // Should be unable to find IP in ARP cache
     EXPECT_EQ(res, -1);
@@ -111,26 +108,21 @@ TEST_F(EthernetTest, SendToIPHaveMAC) {
     ar_t *arp = &ar;
 
     // format arp message
-    arp->hrd = htons(1); // Ethernet msg
-    arp->pro = htons(ETH_P_IP); // IP
-    arp->hln = 6; // hardware proto. length
-    arp->pln = 4; // protocol length (IPv4 = 4)
-    arp->op = htons(ARPOP_REPLY); // ARP REPLY
+    arp->hrd = htons(1);             // Ethernet msg
+    arp->pro = htons(ETH_P_IP);      // IP
+    arp->hln = 6;                    // hardware proto. length
+    arp->pln = 4;                    // protocol length (IPv4 = 4)
+    arp->op = htons(ARPOP_REPLY);    // ARP REPLY
     memcpy(arp->sha, target_mac, 6); // source MAC
     arp->spa = htonl(convert_ip(target_ip));
-    arp->tpa = htonl(interface.src_ip); // target ip is US
+    arp->tpa = htonl(interface.src_ip);     // target ip is US
     memcpy(arp->tha, interface.src_mac, 6); // target mac is US
 
     EXPECT_EQ(recv_arp(arp, &interface), -1);
 
     const char *msg = "Hello World!";
-    int res = send_eth_to_ip(
-        (void *)msg,
-        ETH_P_IP,
-        convert_ip(target_ip),
-        sizeof("Hello World!"),
-        &interface
-    );
+    int res = send_eth_to_ip((void *)msg, ETH_P_IP, convert_ip(target_ip),
+                             sizeof("Hello World!"), &interface);
 
     // Should be able to find IP in ARP cache
     EXPECT_EQ(res, 0);

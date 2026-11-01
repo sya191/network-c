@@ -1,5 +1,6 @@
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <sys/types.h>
 // the test functions below should mimic a NIC read/write interface
 // i.e. they read and write at most one frame per time
 // no need to worry about multiple reads/writes in succession
@@ -11,7 +12,7 @@ uint32_t convert_ip(const char *src);
 
 /**
  * @returns double precision float of current timestamp (MONOTONIC)
- * 
+ *
  * @note <seconds.milliseconds>
  */
 double get_timestamp();

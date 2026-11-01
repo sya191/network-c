@@ -1,18 +1,25 @@
-#include <gtest/gtest.h>
-#include <fcntl.h>
-#include <linux/if_ether.h>
-#include <net/if_arp.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <gtest/gtest.h>
+#include <net/if_arp.h>
 extern "C" {
 #include "fragment.h"
 #include "ip.h"
 #include "utils.h"
 }
 
-class FragmentTest: public ::testing::Test {
-protected:
+class FragmentTest : public ::testing::Test {
+  protected:
     void SetUp() override {
-        int fd = open("./", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
+        char path[] = "/tmp/network_test_XXXXXX";
+        int fd = mkstemp(path);
+        if (fd == -1) {
+            perror("mkstemp");
+            exit(EXIT_FAILURE);
+        }
+        unlink(
+            path); // Unlink immediately: the file descriptor stays valid,
+                   // but the file is automatically wiped from disk when closed.
         if (fd == -1) {
             perror("open()");
             exit(EXIT_FAILURE);
@@ -75,14 +82,12 @@ TEST_F(FragmentTest, isNotFragment) {
 }
 
 TEST_F(FragmentTest, offsetCalc) {
-    // format IP hdr 
-    ip_t hdr = {
-        .total_len = ntohs(sizeof(ip_t) + 5),
-        .flags_offset = ntohs(0x1)
-    };
+    // format IP hdr
+    ip_t hdr = {.total_len = ntohs(sizeof(ip_t) + 5),
+                .flags_offset = ntohs(0x1)};
     int offsets[2];
     extract_offset(offsets, &hdr);
-    ASSERT_EQ(offsets[0], 8); // inclusive
+    ASSERT_EQ(offsets[0], 8);  // inclusive
     ASSERT_EQ(offsets[1], 12); // inclusive
 }
 
@@ -113,8 +118,6 @@ TEST_F(FragmentTest, rangeOverlaps) {
     ASSERT_EQ(offsets_overlap(src0, src1), true);
 }
 
-
-
 /**
  * Tests if correctly pushes fragmented datagrams up stack
  */
@@ -139,14 +142,14 @@ TEST_F(FragmentTest, recvTwoFragments) {
 
     // set up second fragment
     size = sizeof(ip_t) + 5;
-    uint8_t frag2[size] = {0};
+    uint8_t frag2[sizeof(ip_t) + 5] = {0};
     hdr = (ip_t *)frag2;
     hdr->total_len = htons(size);
     // more fragments = 0, offset = 1
     hdr->flags_offset = htons(0x1);
     hdr->identification = htons(0x1);
     hdr->protocol = 254;
-    
+
     payload = (char *)(hdr + 1);
     strncpy(payload, "rld!", 5);
 
@@ -177,14 +180,14 @@ TEST_F(FragmentTest, correctAssembly) {
 
     // set up second fragment
     size = sizeof(ip_t) + 5;
-    uint8_t frag2[size] = {0};
+    uint8_t frag2[sizeof(ip_t) + 5] = {0};
     hdr = (ip_t *)frag2;
     hdr->total_len = htons(size);
     // more fragments = 0, offset = 1
     hdr->flags_offset = htons(0x1);
     hdr->identification = htons(0x1);
     hdr->protocol = 254;
-    
+
     payload = (char *)(hdr + 1);
     strncpy(payload, "rld!", 5);
 
