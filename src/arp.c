@@ -1,24 +1,18 @@
 #include "arp.h"
-#include "utils.h"
 #include "ethernet.h"
+#include "utils.h"
+#include <arpa/inet.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <stdbool.h>
-#include <arpa/inet.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
 
 static pthread_rwlock_t CACHE_LOCK = PTHREAD_RWLOCK_INITIALIZER;
-static arp_cache_t arp_cache = {
-    .data = {{0}},
-    .size = 0
-};
+static arp_cache_t arp_cache = {.data = {{0}}, .size = 0};
 
-int lookup_ip(uint8_t mac_dest[6], uint32_t ip)
-{
+int lookup_ip(uint8_t mac_dest[6], uint32_t ip) {
     if (pthread_rwlock_rdlock(&CACHE_LOCK) != 0) {
         perror("pthread_rwlock_rdlock()");
         exit(EXIT_FAILURE);
@@ -41,8 +35,7 @@ cleanup:
 }
 
 // Update an ip entry with new MAC
-static void update_ip(uint32_t ip, uint8_t src[6])
-{
+static void update_ip(uint32_t ip, uint8_t src[6]) {
     if (pthread_rwlock_wrlock(&CACHE_LOCK) != 0) {
         perror("pthread_rwlock_wrlock()");
         exit(EXIT_FAILURE);
@@ -71,8 +64,7 @@ static void update_ip(uint32_t ip, uint8_t src[6])
 }
 
 // TODO: recv_arp should call the ethernet module to send frames
-int recv_arp(ar_t *arp_msg, iface_t *interface) 
-{   
+int recv_arp(ar_t *arp_msg, iface_t *interface) {
     // take care to convert byte order for multibyte values
     uint16_t hardware_id = ntohs(arp_msg->hrd);
     if (hardware_id == ARPHRD_ETHER) {
@@ -83,8 +75,9 @@ int recv_arp(ar_t *arp_msg, iface_t *interface)
             uint32_t target_ip = ntohl(arp_msg->tpa);
             uint32_t sender_ip = ntohl(arp_msg->spa);
             // if the sender exists in our table
-            // Why the merge flag? Because we should only update our cache if we've talked to them before.
-            // If we've never talked to them, then just drop the packet silently.
+            // Why the merge flag? Because we should only update our cache if
+            // we've talked to them before. If we've never talked to them, then
+            // just drop the packet silently.
             if (lookup_ip(mac_dest, sender_ip) == 0) {
                 // update the MAC address of the sender in the table
                 update_ip(sender_ip, arp_msg->sha);
@@ -98,7 +91,8 @@ int recv_arp(ar_t *arp_msg, iface_t *interface)
                 if (merge_flag == false) {
                     uint8_t *mac = arp_msg->sha;
                     printf("Cached new arp: ");
-                    printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+                    printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1],
+                           mac[2], mac[3], mac[4], mac[5]);
                     update_ip(sender_ip, arp_msg->sha);
                 }
                 // TODO: refactor below this line to a send_arp() function
@@ -110,13 +104,8 @@ int recv_arp(ar_t *arp_msg, iface_t *interface)
                     arp_msg->op = htons(ARPOP_REPLY);
 
                     // send
-                    send_eth_to_mac(
-                        arp_msg, 
-                        ETH_P_ARP, 
-                        arp_msg->tha, 
-                        sizeof(ar_t), 
-                        interface
-                    );
+                    send_eth_to_mac(arp_msg, ETH_P_ARP, arp_msg->tha,
+                                    sizeof(ar_t), interface);
 
                     return 0;
                 }
@@ -127,14 +116,13 @@ int recv_arp(ar_t *arp_msg, iface_t *interface)
     return -1;
 }
 
-void broadcast_arp(uint32_t target, iface_t *interface)
-{
+void broadcast_arp(uint32_t target, iface_t *interface) {
     // Build ARP payload
     ar_t arp_msg;
     ar_t *ar = &arp_msg;
     ar->hrd = htons(ARPHRD_ETHER);
     ar->pro = htons(ETH_P_IP);
-    ar->hln = ETH_ALEN;
+    ar->hln = 6;
     ar->pln = sizeof(struct in_addr);
     ar->op = htons(ARPOP_REQUEST);
     memcpy(ar->sha, interface->src_mac, 6);
@@ -142,17 +130,10 @@ void broadcast_arp(uint32_t target, iface_t *interface)
     ar->tpa = htonl(target);
 
     uint8_t broadcast_addr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    send_eth_to_mac(
-        ar,
-        ETH_P_ARP,
-        broadcast_addr,
-        sizeof(ar_t),
-        interface
-    );
+    send_eth_to_mac(ar, ETH_P_ARP, broadcast_addr, sizeof(ar_t), interface);
 }
 
-void clear_cache()
-{
+void clear_cache() {
     arp_cache.size = 0;
     memset(arp_cache.data, 0, sizeof(arp_cache.data));
 }

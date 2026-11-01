@@ -1,17 +1,14 @@
 #include "ethernet.h"
-#include "ip.h"
 #include "arp.h"
+#include "ip.h"
 #include "utils.h"
-#include <linux/if_ether.h>
-#include <stdio.h>
 #include <arpa/inet.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-static bool 
-mac_for_us(uint8_t mac[6], iface_t *interface)
-{
+static bool mac_for_us(uint8_t mac[6], iface_t *interface) {
     // check if it is broadcast/interface mac
     bool is_us = true;
     bool is_broadcast = true;
@@ -21,7 +18,8 @@ mac_for_us(uint8_t mac[6], iface_t *interface)
         }
     }
 
-    if (is_us) return true;
+    if (is_us)
+        return true;
 
     for (int i = 0; i < 6; ++i) {
         if (mac[i] != 0xff) {
@@ -32,8 +30,7 @@ mac_for_us(uint8_t mac[6], iface_t *interface)
     return is_broadcast;
 }
 
-int recv_eth(iface_t *interface)
-{
+int recv_eth(iface_t *interface) {
     // read eth frame into buffer
     uint8_t buf[1500];
     if (interface->read(interface->fd, buf) < 0) {
@@ -50,26 +47,21 @@ int recv_eth(iface_t *interface)
     void *payload = (void *)hdr + sizeof(eth_hdr_t);
     uint16_t ethertype = ntohs(hdr->ethertype);
     switch (ethertype) {
-        case ETH_P_ARP:
-            recv_arp(payload, interface);
-            break;
-        case ETH_P_IP:
-            printf("Recieved IP message!\n");
-            recv_ip(payload, interface);
-        default:
-            break;
+    case ETH_P_ARP:
+        recv_arp(payload, interface);
+        break;
+    case ETH_P_IP:
+        printf("Recieved IP message!\n");
+        recv_ip(payload, interface);
+    default:
+        break;
     }
 
     return ethertype;
 }
 
-int send_eth_to_ip(
-    void *payload, 
-    uint16_t ethertype,
-    uint32_t target_ip,
-    size_t len,
-    iface_t *interface)
-{
+int send_eth_to_ip(void *payload, uint16_t ethertype, uint32_t target_ip,
+                   size_t len, iface_t *interface) {
     size_t size = sizeof(eth_hdr_t) + len;
     uint8_t buf[size];
 
@@ -104,13 +96,8 @@ int send_eth_to_ip(
     return 0;
 }
 
-int send_eth_to_mac(
-    void *payload,
-    uint16_t ethertype,
-    uint8_t target_mac[6],
-    size_t len,
-    iface_t *interface)
-{
+int send_eth_to_mac(void *payload, uint16_t ethertype, uint8_t target_mac[6],
+                    size_t len, iface_t *interface) {
     size_t size = sizeof(eth_hdr_t) + len;
     uint8_t buf[size];
 

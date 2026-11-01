@@ -1,26 +1,22 @@
-#include "recieve.h"
-#include "interface.h"
-#include "iface.h"
 #include "ethernet.h"
 #include "icmp.h"
+#include "iface.h"
+#include "interface.h"
 #include "ip.h"
+#include "recieve.h"
 #include "string.h"
 #include "utils.h"
-#include <linux/if_ether.h>
 #include <arpa/inet.h>
 
 /**
  * Need to run with sudo
  */
-void spam_ip()
-{
-    iface_t interface = {
-        .fd = create_interface(),
-        .write = write_interface,
-        .read = read_interface,
-        .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
-        .src_ip = convert_ip("192.168.1.104")
-    };
+void spam_ip() {
+    iface_t interface = {.fd = create_interface(),
+                         .write = write_interface,
+                         .read = read_interface,
+                         .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
+                         .src_ip = convert_ip("192.168.1.104")};
 
     start_rx(&interface);
 
@@ -34,30 +30,21 @@ void spam_ip()
     char *msg = "Hello World!";
     memcpy(ip_frame + sizeof(ip_t), msg, 13);
 
-
     for (;;) {
-        send_eth_to_ip(
-            ip_frame,
-            ETH_P_IP,
-            macbook_ip,
-            sizeof(ip_t) + 13,
-            &interface
-        );
+        send_eth_to_ip(ip_frame, ETH_P_IP, macbook_ip, sizeof(ip_t) + 13,
+                       &interface);
     }
 }
 
 /**
  * Need to run with sudo
  */
-int main()
-{
-    iface_t interface = {
-        .fd = create_interface(),
-        .write = write_interface,
-        .read = read_interface,
-        .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
-        .src_ip = convert_ip("192.168.1.104")
-    };
+int main() {
+    iface_t interface = {.fd = create_interface(),
+                         .write = write_interface,
+                         .read = read_interface,
+                         .src_mac = {0x2, 0x0, 0x0, 0x0, 0x6, 0x7},
+                         .src_ip = convert_ip("192.168.1.104")};
 
     start_rx(&interface);
 
@@ -67,6 +54,5 @@ int main()
     //     echo_request(macbook_ip, i, NULL, 0, &interface);
     // }
     for (;;) {
-
     }
 }
